@@ -1310,9 +1310,67 @@ double System::TwoBodyEnergy(bool do_grads) {
 double System::Get2B(bool do_grads) {
     // No dimers makes the function return 0.
 
+   // // Initialize MPI
+   // MPI_Init(NULL, NULL);
+
+   // // Get the number of processes
+   // int world_size;
+   // MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+   // // Get the rank of the process
+   // int world_rank;
+   // MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+
+   // // Get the name of the processorS
+   // char processor_name[MPI_MAX_PROCESSOR_NAME];
+   // int name_len;
+   // MPI_Get_processor_name(processor_name, &name_len);
+
+   // std::vector<size_t> index_this_rank(nummon_);
+   // size_t index_size_this_rank;    
+
+
+   // if (world_rank == 0) {
+   //     std::vector<std::vector<size_t> > indexes(world_size);
+   //     for (size_t i = 0, id = 0; i < nummon_; i++) {            
+   //         indexes[id++].push_back(i);
+   //         if (id == world_size) { id = 0 ; }
+   //     }
+   //     for (int i = 1; i < world_size; i++){
+   //         size_t index_send_size = indexes[i].size();
+   //         MPI_Send(&index_send_size, 1, MPI_UNSIGNED, i, 20, MPI_COMM_WORLD);
+   //         MPI_Send(&indexes[i][0], index_send_size, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+   //         std::cout << "Sending indexes from processor 0 to " << i << std::endl; 
+   //     }
+   // } else {
+
+   //     MPI_Recv(&index_size_this_rank, 1, MPI_UNSIGNED, 0, 20, MPI_COMM_WORLD,
+   //              MPI_STATUS_IGNORE);
+
+   //     MPI_Recv(&index_this_rank[0], index_size_this_rank, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
+   //              MPI_STATUS_IGNORE);
+   //     std::cout << "Process " << world_rank << " received matrix from process 0 " << std::endl;
+	 // 		
+   //     for (size_t i = 0; i < index_size_this_rank; i++){
+   //         std::cout << "Rank " << world_rank << " calculates " << index_this_rank[i] << std::endl;
+   //     }
+
+   //}
+
+
+
     // 2B ENERGY
     double e2b_t = 0.0;
     double edisp_t = 0.0;
+
+    
+
+    // Generate list of monomers for MPI
+    // std::vector<std::vector<size_t> > indexes
+    //for (size_t i
+
+
 
     // Variables needed for OMP
     size_t step = 1;
@@ -1533,6 +1591,9 @@ double System::Get2B(bool do_grads) {
 #ifdef DEBUG
     std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
 #endif
+
+    // Finalize the MPI environment.
+    MPI_Finalize();
 
     return e2b_t + edisp_t;
 }

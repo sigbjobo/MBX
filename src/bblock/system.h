@@ -43,6 +43,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <fstream>
 #include <memory>
 
+#include <mpi.h>
+
 // Tools
 #include "kdtree/nanoflann.hpp"
 #include "kdtree/kdtree_utils.h"
