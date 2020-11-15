@@ -346,7 +346,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.64236);  // A^(-1)
         b.push_back(3.64236);  // A^(-1)
         b.push_back(3.52744);  // A^(-1)
-    } else if (mon_id1 == "ch4" && mon_id2 == "ch4") {
+    } else if ((mon_id1 == "ch4" && mon_id2 == "ch4") || (mon_id1 == "ch4_0p" && mon_id2 == "ch4_0p")) {
         // Define the type of atom in each mon
         types1.push_back(0);
         types1.push_back(1);
@@ -373,7 +373,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.25885);  // A^(-1)
         b.push_back(3.25885);  // A^(-1)
         b.push_back(4.05972);  // A^(-1)
-    } else if (mon_id1 == "ch4" && mon_id2 == "h2o") {
+    } else if ((mon_id1 == "ch4" && mon_id2 == "h2o") || (mon_id1 == "ch4_0p" && mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
         types1.push_back(1);
