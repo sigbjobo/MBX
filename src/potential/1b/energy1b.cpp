@@ -48,6 +48,8 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
 #endif
 
     std::vector<double> energies;
+    if (mon1 == "co2" || mon1 == "co2100" || mon1 == "co295" || mon1 == "co290" || mon1 == "co285" || mon1 == "co280")
+        mon1 = "co2";
     // Look for the proper call to energy depending on the monomer id
     if (mon1 == "h2o") {
         energies = ps::pot_nasa(xyz1.data(), 0, nm);
@@ -109,6 +111,8 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     std::cerr << std::endl;
 #endif
 
+    if (mon1 == "co2" || mon1 == "co2100" || mon1 == "co295" || mon1 == "co290" || mon1 == "co285" || mon1 == "co280")
+        mon1 = "co2";
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
     if (mon1 == "h2o") {
