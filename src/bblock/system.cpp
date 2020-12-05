@@ -58,6 +58,7 @@ namespace bblock {  // Building Block :: System
 
 System::System() {
     initialized_ = false;
+    monomer_json_read_ = false;
     mpi_initialized_ = false;
     simcell_periodic_ = false;
 }
@@ -618,6 +619,9 @@ void System::Initialize() {
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+    // Do not attempt to initiaize if monomers json file has not been read.
+    if (!monomer_json_read_) return;
+
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cout << std::scientific << std::setprecision(10);
@@ -658,6 +662,32 @@ void System::Initialize() {
     // Retrieves all the monomer information given the coordinates
     // and monomer id, such as number of sites, and orders the monomers
     AddMonomerInfo();
+
+    //    // First try to do it. If Json file is not loaded, monomer info will not be there and need to wait.
+    //
+    //    // Copy data inc ase initialization is supposed to fail because monomer is in json instead of hardcoded
+    //    std::vector<double> xyz_cp = xyz_;
+    //    std::vector<std::string> atoms_cp = atoms_;
+    //    std::vector<int> atom_tag_cp = atom_tag_;
+    //    std::vector<std::string> monomers_cp = monomers_;
+    //    std::vector<size_t> sites_cp = sites_;
+    //    std::vector<size_t> nat_cp = nat_;
+    //    try {
+    //        AddMonomerInfo();
+    //    } catch (CUException e) {
+    //        if (monomer_json_read_) {
+    //            std::string text = std::string(e.what()) + std::string("\nMonomer id not found in json file or
+    //            hardcoded"); throw CUException(__func__, __FILE__, __LINE__, text);
+    //        }
+    //        // Revert back possible changes
+    //        xyz_ = xyz_cp;
+    //        atoms_ = atoms_cp;
+    //        atom_tag_ = atom_tag_cp;
+    //        monomers_ = monomers_cp;
+    //        sites_ = sites_cp;
+    //        nat_ = nat_cp;
+    //        return;
+    //    }
 
     // Setting the number of molecules and number of monomers
     nummol = molecules_.size();
@@ -799,6 +829,77 @@ void System::InitializePME() {
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
+}
+
+void System::SetUpFromJsonDispersionRepulsion(char *json_file) {
+    nlohmann::json j_default = {};
+    std::ifstream ifjson;
+    nlohmann::json j;
+    if (json_file != 0 && std::string(json_file) != "") {
+        try {
+            ifjson.open(json_file);
+            j = nlohmann::json::parse(ifjson);
+        } catch (...) {
+            j = j_default;
+            std::cerr << "There has been a problem loading your json file: " + std::string(json_file) +
+                             "... using defaults";
+        }
+    } else {
+        j = j_default;
+    }
+
+    SetUpFromJsonDispersionRepulsion(j);
+
+    ifjson.close();
+}
+
+void System::SetUpFromJsonMonomers(char *json_file) {
+    nlohmann::json j_default = {};
+    std::ifstream ifjson;
+    nlohmann::json j;
+    if (json_file != 0 && std::string(json_file) != "") {
+        try {
+            ifjson.open(json_file);
+            j = nlohmann::json::parse(ifjson);
+        } catch (...) {
+            j = j_default;
+            std::cerr << "There has been a problem loading your json file: " + std::string(json_file) +
+                             "... using defaults";
+        }
+    } else {
+        j = j_default;
+    }
+
+    SetUpFromJsonMonomers(j);
+
+    ifjson.close();
+}
+
+void SetUpFromJsonDispersionRepulsion(std::string json_text) {
+    nlohmann::json j = nlohmann::json::parse(json_text);
+    SetUpFromJsonDispersionRepulsion(j);
+}
+
+void SetUpFromJsonMonomers(std::string json_text) {
+    nlohmann::json j = nlohmann::json::parse(json_text);
+    SetUpFromJsonMonomers(j);
+}
+
+void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
+    repdisp_j_ = j;
+    dispersionE_.SetJsonDispersionRepulsion(repdisp_j_);
+    buckinghamE_.SetJsonDispersionRepulsion(repdisp_j_);
+}
+
+void System::SetUpFromJsonMonomers(nlohmann::json j) {
+    monomers_j_ = j;
+    monomer_json_read_ = true;
+
+    Initialize();
+
+    electrostaticE_.SetJsonMonomers(monomers_j_);
+    dispersionE_.SetJsonMonomers(monomers_j_);
+    buckinghamE_.SetJsonMonomers(monomers_j_);
 }
 
 void System::SetUpFromJson(nlohmann::json j) {
@@ -1088,15 +1189,38 @@ void System::SetUpFromJson(nlohmann::json j) {
     std::string connectivity_file = "";
     try {
         connectivity_file = j["MBX"]["connectivity_file"];
-        // Set the connectivity map in system
-        // FIXME MRR Get connectivity from the file
-        // FIXME MRR Set up connectivity in system
         tools::ReadConnectivity(connectivity_file.c_str(), connectivity_map_);
     } catch (...) {
         connectivity_file = "";
         std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
     }
     mbx_j_["MBX"]["connectivity_file"] = connectivity_file;
+
+    std::string repdisp_file = "";
+    try {
+        repdisp_file = j["MBX"]["nonbonded_file"];
+        char f[repdisp_file.length() + 1];
+        strcpy(f, repdisp_file.c_str());
+        SetUpFromJsonDispersionRepulsion(f);
+    } catch (...) {
+        repdisp_file = "";
+        SetUpFromJsonDispersionRepulsion();
+        std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file.\n";
+    }
+    mbx_j_["MBX"]["nonbonded_file"] = repdisp_file;
+
+    std::string monomers_json_file = "";
+    try {
+        monomers_json_file = j["MBX"]["monomers_file"];
+        char f[monomers_json_file.length() + 1];
+        strcpy(f, monomers_json_file.c_str());
+        SetUpFromJsonMonomers(f);
+    } catch (...) {
+        monomers_json_file = "";
+        SetUpFromJsonMonomers();
+        std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
+    }
+    mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
 
     SetPBC(box_);
 }
@@ -1299,7 +1423,7 @@ void System::AddMonomerInfo() {
 
     // Adding the number of sites of each monomer and storing the first index
     std::vector<size_t> fi_at;
-    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
+    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at, monomers_j_);
 
 #ifdef DEBUG
     std::cerr << "Finished SetUpMonomers.\n";
@@ -1565,6 +1689,7 @@ double System::Energy(bool do_grads) {
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
+              << "FF = " << eff << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
               << "Disp = " << edisp << std::endl
@@ -1680,7 +1805,7 @@ double System::GetFF(bool do_grads) {
                 // EY: Note: grad2 is passed by reference.
                 try {
                     eff += eff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, grad2, allMonGood_,
-                                              nat_[curr_mon_type], &virial_);
+                                              nat_[curr_mon_type], box_, box_inverse_, &virial_);
                 } catch (const std::exception &e) {
                     std::string text =
                         std::string("Monomer id not contained in connectivity map. System monomer id given is: ") +
@@ -1700,7 +1825,7 @@ double System::GetFF(bool do_grads) {
                 try {
                     // EY: ONLY get the energy
                     eff += eff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, allMonGood_,
-                                              nat_[curr_mon_type]);
+                                              nat_[curr_mon_type], box_, box_inverse_);
                 } catch (const std::exception &e) {
                     std::string text =
                         std::string("Monomer id not contained in connectivity map. System monomer id given is: ") +
@@ -2358,7 +2483,7 @@ void System::SetCharges() {
         size_t nmon = mon_type_count_[k].second;
         size_t nsites = sites_[fi_mon];
 
-        systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon], chggrad_);
+        systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon], chggrad_, monomers_j_);
         fi_mon += nmon;
     }
 
@@ -2393,7 +2518,7 @@ void System::SetPols() {
         size_t nmon = mon_type_count_[k].second;
         size_t nsites = sites_[fi_mon];
 
-        systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon]);
+        systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon], monomers_j_);
         fi_mon += nmon;
     }
 
@@ -2425,7 +2550,7 @@ void System::SetPolfacs() {
         size_t nmon = mon_type_count_[k].second;
         size_t nsites = sites_[fi_mon];
 
-        systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon]);
+        systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon], monomers_j_);
         fi_mon += nmon;
     }
 
@@ -2459,7 +2584,7 @@ void System::SetC6LongRange() {
         size_t nmon = mon_type_count_[k].second;
         size_t natoms = nat_[fi_mon];
 
-        systools::SetC6LongRange(c6_lr_, mon, nmon, natoms, fi_atoms);
+        systools::SetC6LongRange(c6_lr_, mon, nmon, natoms, fi_atoms, monomers_j_);
         fi_mon += nmon;
         fi_atoms += nmon * natoms;
     }
