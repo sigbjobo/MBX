@@ -32,42 +32,51 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "potential/dispersion/dispersion.h"
+#include "potential/lj/lj.h"
 
-namespace disp {
+/**
+ * @file lj.cpp
+ * @brief Contains the functions definition for the LennardJones class
+ */
 
-std::vector<size_t> Dispersion::GetIsLocal() { return islocal_; }
-std::vector<std::string> Dispersion::GetMonIds() { return mon_id_; }
-std::vector<size_t> Dispersion::GetNumAtomsVector() { return num_atoms_; }
-std::vector<std::pair<std::string, size_t> > Dispersion::GetMonTypeCount() { return mon_type_count_; }
-bool Dispersion::GetDoGrads() { return do_grads_; }
-std::vector<double> Dispersion::GetBox() { return box_; }
-std::vector<double> Dispersion::GetBoxAbc() { return box_ABCabc_; }
-std::vector<double> Dispersion::GetBoxInverse() { return box_inverse_; }
-std::vector<double> Dispersion::GetSystemDispersionField() { return sys_phi_; }
-std::vector<double> Dispersion::GetInternalDispersionField() { return phi_; }
-std::vector<double> Dispersion::GetSystemXyz() { return sys_xyz_; }
-std::vector<double> Dispersion::GetInternalXyz() { return xyz_; }
-std::vector<double> Dispersion::GetInternalGrads() { return grad_; }
-std::vector<double> Dispersion::GetSystemGrads() { return sys_grad_; }
-std::vector<double> Dispersion::GetSystemC6LongRange() { return sys_c6_long_range_; }
-std::vector<double> Dispersion::GetInternalC6LongRange() { return c6_long_range_; }
-std::vector<double> Dispersion::GetVirial() { return virial_; }
-std::vector<size_t> Dispersion::GetIsLocalAtom() { return islocal_atom_; }
-std::vector<int> Dispersion::GetUserFFTGrid() { return user_fft_grid_; }
-double Dispersion::GetCutoff() { return cutoff_; }
+/**
+ * @namespace lj
+ * @brief Encloses the functions related to classical lennard-jones.
+ */
+namespace lj {
 
-void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
-                            const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
-                            const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                            const std::vector<size_t> &islocal, const bool do_grads, const std::vector<double> &box) {
+std::vector<size_t> LennardJones::GetIsLocal() { return islocal_; }
+std::vector<std::string> LennardJones::GetMonIds() { return mon_id_; }
+std::vector<size_t> LennardJones::GetNumAtomsVector() { return num_atoms_; }
+std::vector<std::pair<std::string, size_t> > LennardJones::GetMonTypeCount() { return mon_type_count_; }
+bool LennardJones::GetDoGrads() { return do_grads_; }
+std::vector<double> LennardJones::GetBox() { return box_; }
+std::vector<double> LennardJones::GetBoxAbc() { return box_ABCabc_; }
+std::vector<double> LennardJones::GetBoxInverse() { return box_inverse_; }
+std::vector<double> LennardJones::GetSystemLennardJonesField() { return sys_phi_; }
+std::vector<double> LennardJones::GetInternalLennardJonesField() { return phi_; }
+std::vector<double> LennardJones::GetSystemXyz() { return sys_xyz_; }
+std::vector<double> LennardJones::GetInternalXyz() { return xyz_; }
+std::vector<double> LennardJones::GetInternalGrads() { return grad_; }
+std::vector<double> LennardJones::GetSystemGrads() { return sys_grad_; }
+std::vector<double> LennardJones::GetSystemLjLongRange() { return sys_lj_long_range_; }
+std::vector<double> LennardJones::GetInternalLjLongRange() { return lj_long_range_; }
+std::vector<double> LennardJones::GetVirial() { return virial_; }
+std::vector<size_t> LennardJones::GetIsLocalAtom() { return islocal_atom_; }
+std::vector<int> LennardJones::GetUserFFTGrid() { return user_fft_grid_; }
+double LennardJones::GetCutoff() { return cutoff_; }
+
+void LennardJones::Initialize(const std::vector<double> sys_ljchg, const std::vector<double> &sys_xyz,
+                              const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
+                              const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+                              const std::vector<size_t> &islocal, const bool do_grads, const std::vector<double> &box) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
 
-    std::cerr << "SysC6LongRange:\n";
-    for (size_t i = 0; i < sys_c6_long_range.size(); i++) {
-        std::cerr << sys_c6_long_range[i] << " , ";
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < sys_ljchg.size(); i++) {
+        std::cerr << sys_ljchg[i] << " , ";
     }
     std::cerr << std::endl;
 
@@ -110,7 +119,6 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     std::cerr << "doGrads = " << do_grads << std::endl;
 #endif
 
-    sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
     mon_id_ = mon_id;
@@ -121,14 +129,15 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     use_pbc_ = box.size();
-    natoms_ = sys_c6_long_range_.size();
+    natoms_ = sys_xyz.size() / 3;
     size_t natoms3 = 3 * natoms_;
     phi_ = std::vector<double>(natoms_, 0.0);
     xyz_ = std::vector<double>(natoms3, 0.0);
     grad_ = std::vector<double>(natoms3, 0.0);
     virial_ = std::vector<double>(9, 0.0);
     sys_grad_ = std::vector<double>(natoms3, 0.0);
-    c6_long_range_ = std::vector<double>(natoms_, 0.0);
+    sys_lj_long_range_ = sys_ljchg;
+    lj_long_range_ = std::vector<double>(natoms_, 0.0);
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     islocal_atom_ = std::vector<size_t>(natoms_, 0);
 
@@ -147,9 +156,9 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
 
-    std::cerr << "c6_long_range_ internal:\n";
-    for (size_t i = 0; i < c6_long_range_.size(); i++) {
-        std::cerr << c6_long_range_[i] << " , ";
+    std::cerr << "lj_long_range_ internal:\n";
+    for (size_t i = 0; i < lj_long_range_.size(); i++) {
+        std::cerr << lj_long_range_[i] << " , ";
     }
     std::cerr << std::endl;
 
@@ -167,13 +176,13 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 #endif
 }
 
-void Dispersion::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
-void Dispersion::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
+void LennardJones::SetJsonLennardJones(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
+void LennardJones::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
-nlohmann::json Dispersion::GetJsonDispersionRepulsion() { return repdisp_j_; }
-nlohmann::json Dispersion::GetJsonMonomers() { return mon_j_; }
+nlohmann::json LennardJones::GetJsonLennardJones() { return repdisp_j_; }
+nlohmann::json LennardJones::GetJsonMonomers() { return mon_j_; }
 
-void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
+void LennardJones::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
     mpi_initialized_ = true;
     world_ = world;
     proc_grid_x_ = proc_grid_x;
@@ -181,9 +190,9 @@ void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, 
     proc_grid_z_ = proc_grid_z;
 }
 
-void Dispersion::SetNewParameters(const std::vector<double> &xyz,
-                                  std::vector<std::pair<std::string, std::string> > &ignore_disp, bool do_grads = true,
-                                  const double cutoff = 100.0, const std::vector<double> &box = {}) {
+void LennardJones::SetNewParameters(const std::vector<double> &xyz,
+                                    std::vector<std::pair<std::string, std::string> > use_lj, bool do_grads = true,
+                                    const double cutoff = 100.0, const std::vector<double> &box = {}) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -205,11 +214,11 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz,
 #endif
 
     sys_xyz_ = xyz;
+    use_lj_ = use_lj;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     use_pbc_ = box.size();
-    ignore_disp_ = ignore_disp;
     do_grads_ = do_grads;
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
@@ -232,12 +241,12 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz,
 #endif
 }
 
-void Dispersion::SetBoxPMElocal(std::vector<double> box) {
+void LennardJones::SetBoxPMElocal(std::vector<double> box) {
     box_PMElocal_ = box;
     box_ABCabc_PMElocal_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
 }
 
-void Dispersion::ReorderData() {
+void LennardJones::ReorderData() {
     // Organize xyz so we have
     // x1_1 x1_2 ... y1_1 y1_2... z1_1 z1_2 ... x2_1 x2_2 ...
     // where xN_M is read as coordinate x of site N of monomer M
@@ -263,7 +272,7 @@ void Dispersion::ReorderData() {
                 xyz_[inmon3 + m + fi_crd] = sys_xyz_[fi_crd + mns3 + 3 * i];
                 xyz_[inmon3 + m + fi_crd + nmon] = sys_xyz_[fi_crd + mns3 + 3 * i + 1];
                 xyz_[inmon3 + m + fi_crd + nmon2] = sys_xyz_[fi_crd + mns3 + 3 * i + 2];
-                c6_long_range_[fi_sites + m + inmon] = sys_c6_long_range_[fi_sites + mns + i];
+                lj_long_range_[fi_sites + m + inmon] = sys_lj_long_range_[fi_sites + mns + i];
                 islocal_atom_[fi_sites + m + inmon] = islocal_[fi_mon + m];
             }
         }
@@ -273,7 +282,7 @@ void Dispersion::ReorderData() {
     }
 }
 
-double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+double LennardJones::GetLennardJones(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -302,7 +311,7 @@ double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> 
     }
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
-    CalculateDispersion(use_ghost);
+    CalculateLennardJones(use_ghost);
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -361,13 +370,13 @@ double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> 
         std::cerr << std::endl;
     }
 
-    std::cerr << "Dispersion energy = " << disp_energy_ << std::endl;
+    std::cerr << "LennardJones energy = " << lj_energy_ << std::endl;
 #endif
 
-    return disp_energy_;
+    return lj_energy_;
 }
 
-double Dispersion::GetDispersionPME(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+double LennardJones::GetLennardJonesPME(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
     calc_virial_ = false;
 
     if (virial != 0) {
@@ -375,7 +384,7 @@ double Dispersion::GetDispersionPME(std::vector<double> &grad, std::vector<doubl
     }
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
-    CalculateDispersionPME(use_ghost);
+    CalculateLennardJonesPME(use_ghost);
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -416,10 +425,10 @@ double Dispersion::GetDispersionPME(std::vector<double> &grad, std::vector<doubl
         fi_crd += nmon * ns * 3;
     }
 
-    return disp_energy_;
+    return lj_energy_;
 }
 
-double Dispersion::GetDispersionPMElocal(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+double LennardJones::GetLennardJonesPMElocal(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
     calc_virial_ = false;
 
     if (virial != 0) {
@@ -427,7 +436,7 @@ double Dispersion::GetDispersionPMElocal(std::vector<double> &grad, std::vector<
     }
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
-    CalculateDispersionPMElocal(use_ghost);
+    CalculateLennardJonesPMElocal(use_ghost);
 
     if (calc_virial_) {
         (*virial)[0] += virial_[0];
@@ -470,11 +479,11 @@ double Dispersion::GetDispersionPMElocal(std::vector<double> &grad, std::vector<
         }
     }
 
-    return disp_energy_;
+    return lj_energy_;
 }
 
-void Dispersion::CalculateDispersion(bool use_ghost) {
-    disp_energy_ = 0.0;
+void LennardJones::CalculateLennardJones(bool use_ghost) {
+    lj_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
@@ -504,9 +513,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         size_t ns = num_atoms_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
+        double dummy_eps, dummy_sigma;
+        bool do_lj = GetLjParams(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, dummy_eps, dummy_sigma, use_lj_, repdisp_j_);
 
-        double dummy_c6, dummy_d6;
-        bool do_disp = GetC6(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
         std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
 
         // Obtain excluded pairs for monomer type mt
@@ -532,11 +541,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 bool is12 = systools::IsExcluded(exc12, i, j);
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
-                double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
-                double c6, d6;
-                double c6i = c6_long_range_[fi_sites + i * nmon];
-                double c6j = c6_long_range_[fi_sites + j * nmon];
-                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                double lj_scale_factor = (is12 || is13 || is14 || !do_lj) ? 0 : 1;
+                double sigma, eps;
+                double ljchgi = lj_long_range_[fi_sites + i * nmon];
+                double ljchgj = lj_long_range_[fi_sites + j * nmon];
+                GetLjParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, eps, sigma, use_lj_, repdisp_j_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -557,9 +566,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         p1[1] = xyz_mt[inmon3 + nmon + m];
                         p1[2] = xyz_mt[inmon3 + nmon2 + m];
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, p1, xyz_mt, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
-                                  m, m + 1, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
-                                  box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
+                            lj(eps, sigma, ljchgi, ljchgj, p1, xyz_mt, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon,
+                               nmon, m, m + 1, i, j, lj_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                               box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
                         grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
@@ -582,7 +591,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             for (size_t k = 0; k < 9; k++) {
                 virial_[k] += virial_pool[rank][k];
             }
-            disp_energy_ += energy_pool[rank];
+            lj_energy_ += energy_pool[rank];
         }
 
         fi_mon += nmon;
@@ -614,12 +623,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
 
-            double dummy_c6, dummy_d6;
-            bool do_disp =
-                GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
-            double disp_scale_factor = do_disp ? 1.0 : 0.0;
+            double dummy_eps, dummy_sigma;
+            bool do_lj =
+                GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, dummy_eps, dummy_sigma, use_lj_, repdisp_j_);
             std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
-
+            double lj_scale_factor = do_lj ? 1.0 : 0.0;
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
             // previous loop.
@@ -652,7 +660,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
-                    double c6i = c6_long_range_[fi_sites1 + i * nmon1];
+                    double ljchgi = lj_long_range_[fi_sites1 + i * nmon1];
                     std::vector<double> xyz_sitei(3);
                     std::vector<double> g1(3, 0.0);
                     double phi_i = 0.0;
@@ -663,13 +671,13 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     for (size_t j = 0; j < ns2; j++) {
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
-                        double c6j = c6_long_range_[fi_sites2 + j * nmon2];
-                        double c6, d6;
-                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
-                        energy_pool[rank] += disp6(
-                            c6, d6, c6i, c6j, xyz_sitei, xyz_mt2, g1, grad2_pool[rank], phi_i, phi2_pool[rank], nmon1,
-                            nmon2, m2init, nmon2, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
-                            box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                        double ljchgj = lj_long_range_[fi_sites2 + j * nmon2];
+                        double eps, sigma;
+                        GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, eps, sigma, use_lj_, repdisp_j_);
+                        energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, xyz_mt2, g1, grad2_pool[rank],
+                                                phi_i, phi2_pool[rank], nmon1, nmon2, m2init, nmon2, i, j,
+                                                lj_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
+                                                use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
@@ -699,7 +707,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
                 }
-                disp_energy_ += energy_pool[rank];
+                lj_energy_ += energy_pool[rank];
             }
 
             // Update first indexes
@@ -731,7 +739,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-        auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+        auto params = helpme::Matrix<double>(sys_lj_long_range_.data(), natoms_, 1);
         auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
         std::vector<double> dummy_6vec(6, 0.0);
         auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
@@ -774,15 +782,15 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         // The Ewald self energy
         double prefac = std::pow(ewald_alpha_, 6) / 12.0;
         double self_energy = 0;
-        for (const auto &c6 : sys_c6_long_range_) {
-            self_energy += c6 * c6 * prefac;
+        for (const auto &lji : sys_lj_long_range_) {
+            self_energy += lji * lji * prefac;
         }
-        disp_energy_ += rec_energy + self_energy;
+        lj_energy_ += rec_energy + self_energy;
     }
 }
 
-void Dispersion::CalculateDispersionPME(bool use_ghost) {
-    disp_energy_ = 0.0;
+void LennardJones::CalculateLennardJonesPME(bool use_ghost) {
+    lj_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
@@ -835,7 +843,7 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
 
-        auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+        auto params = helpme::Matrix<double>(sys_lj_long_range_.data(), natoms_, 1);
         // auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
         auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
         std::vector<double> dummy_6vec(6, 0.0);
@@ -881,16 +889,16 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
         // The Ewald self energy
         double prefac = std::pow(ewald_alpha_, 6) / 12.0;
         double self_energy = 0;
-        for (const auto &c6 : sys_c6_long_range_) {
-            self_energy += c6 * c6 * prefac;
+        for (const auto &lji : sys_lj_long_range_) {
+            self_energy += lji * lji * prefac;
         }
         // With the entire system duplicated on all ranks, this over-counts by Nproc
         self_energy /= (double)num_procs;
-        disp_energy_ += rec_energy + self_energy;
+        lj_energy_ += rec_energy + self_energy;
     }
 }
 
-void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
+void LennardJones::CalculateLennardJonesPMElocal(bool use_ghost) {
     int me;
 #if HAVE_MPI == 1
     MPI_Comm_rank(world_, &me);
@@ -898,7 +906,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     me = 0;
 #endif
 
-    disp_energy_ = 0.0;
+    lj_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
     // Max number of monomers
     //    size_t maxnmon = mon_type_count_.back().second;
@@ -998,7 +1006,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 	
         auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
 #else
-    auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+    auto params = helpme::Matrix<double>(sys_lj_long_range_.data(), natoms_, 1);
 #endif
 
     auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
@@ -1045,16 +1053,16 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     double prefac = std::pow(ewald_alpha_, 6) / 12.0;
     double self_energy = 0;
 
-    for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+    for (int i = 0; i < natoms_; ++i) self_energy += lj_long_range_[i] * lj_long_range_[i] * islocal_atom_[i];
 
     self_energy *= prefac;
 
-    disp_energy_ += rec_energy + self_energy;
+    lj_energy_ += rec_energy + self_energy;
 
     //} // if(compute_pme)
 }
 
-std::vector<int> Dispersion::GetFFTDimension(int box_id) {
+std::vector<int> LennardJones::GetFFTDimension(int box_id) {
     double A, B, C, alpha, beta, gamma;
     bool compute_pme = true;
     if (box_id == 0) {
@@ -1104,7 +1112,7 @@ std::vector<int> Dispersion::GetFFTDimension(int box_id) {
     return fft_grid;
 }
 
-void Dispersion::SetFFTDimension(std::vector<int> grid) {
+void LennardJones::SetFFTDimension(std::vector<int> grid) {
     // Easy things to check
     // If not, throw exception
 
@@ -1126,4 +1134,4 @@ void Dispersion::SetFFTDimension(std::vector<int> grid) {
     user_fft_grid_ = grid;
 }
 
-}  // namespace disp
+}  // namespace lj

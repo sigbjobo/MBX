@@ -61,6 +61,47 @@ System::System() {
     monomer_json_read_ = false;
     mpi_initialized_ = false;
     simcell_periodic_ = false;
+
+    // Define some of the parameters
+
+    /////////////
+    // CUTOFFS //
+    /////////////
+
+    // Setting 2B cutoff
+    // Affects the 2B dispersion and 2B polynomials
+    // TODO make it effective for electrostatics too
+    cutoff2b_ = 50.0;
+
+    // Setting 3B cutoff
+    // Affects the 3B polynomials
+    cutoff3b_ = 5.0;
+
+    ////////////////////////
+    // Evaluation batches //
+    ////////////////////////
+
+    // Maximum number in the batch for the 1B evaluation
+    maxNMonEval_ = 1024;
+    // Maximum number in the batch for the 2B evaluation
+    maxNDimEval_ = 1024;
+    // Maximum number in the batch for the 3B evaluation
+    maxNTriEval_ = 1024;
+
+    // Setting dipole tolerance to a consrvative value
+    // TODO make it be error/dipole, not total error as it is now
+    diptol_ = 1E-16;
+    // Sets the maximum number of iteartions in the induced dipole
+    // calculation. Will assume no convergence if this number is reached
+    maxItDip_ = 100;
+    // Sets the default method to calculate induced dipoles to ASPC
+    dipole_method_ = "cg";
+
+    // Define the virial vector
+    virial_ = std::vector<double>(9, 0.0);
+
+    grid_fftdim_elec_ = std::vector<int>{};
+    grid_fftdim_disp_ = std::vector<int>{};
 }
 System::~System() {}
 
@@ -233,14 +274,24 @@ std::vector<int> System::GetFFTDimensionElectrostatics(int box_id) { return elec
 
 std::vector<int> System::GetFFTDimensionDispersion(int box_id) { return dispersionE_.GetFFTDimension(box_id); }
 
+std::vector<int> System::GetFFTDimensionLennardJones(int box_id) { return lennardJonesE_.GetFFTDimension(box_id); }
+
 void System::SetFFTDimensionElectrostatics(std::vector<int> grid) { electrostaticE_.SetFFTDimension(grid); }
 
 void System::SetFFTDimensionDispersion(std::vector<int> grid) { dispersionE_.SetFFTDimension(grid); }
+
+void System::SetFFTDimensionLennardJones(std::vector<int> grid) { lennardJonesE_.SetFFTDimension(grid); }
 
 void System::GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order) {
     alpha = disp_alpha_;
     grid_density = disp_grid_density_;
     spline_order = disp_spline_order_;
+}
+
+void System::GetEwaldParamsLennardJones(double &alpha, double &grid_density, size_t &spline_order) {
+    alpha = lj_alpha_;
+    grid_density = lj_grid_density_;
+    spline_order = lj_spline_order_;
 }
 
 // FIXME As for today, these functions are not used. // MRR 20191022
@@ -557,6 +608,28 @@ void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string>> ttm
     }
 }
 
+void System::SetLennardJonesPairs(std::vector<std::pair<std::string, std::string>> use_lennard_jones) {
+    lj_pairs_.clear();
+
+    for (auto it = use_lennard_jones.begin(); it != use_lennard_jones.end(); it++) {
+        std::string s1 = (*it).first;
+        std::string s2 = (*it).second;
+        std::pair<std::string, std::string> p = s2 < s1 ? std::make_pair(s2, s1) : std::make_pair(s1, s2);
+        lj_pairs_.push_back(p);
+    }
+}
+
+void System::SetIgnoreDispersionPairs(std::vector<std::pair<std::string, std::string>> ignore_dispersion) {
+    ignore_disp_.clear();
+
+    for (auto it = ignore_dispersion.begin(); it != ignore_dispersion.end(); it++) {
+        std::string s1 = (*it).first;
+        std::string s2 = (*it).second;
+        std::pair<std::string, std::string> p = s2 < s1 ? std::make_pair(s2, s1) : std::make_pair(s1, s2);
+        ignore_disp_.push_back(p);
+    }
+}
+
 void System::SetFFMons(std::vector<std::string> ff_mons) { ff_mons_ = ff_mons; }
 
 void System::AddFFMon(std::string mon) {
@@ -627,34 +700,6 @@ void System::Initialize() {
     std::cout << std::scientific << std::setprecision(10);
 #endif
 
-    /////////////
-    // CUTOFFS //
-    /////////////
-
-    // Setting 2B cutoff
-    // Affects the 2B dispersion and 2B polynomials
-    // TODO make it effective for electrostatics too
-    cutoff2b_ = 50.0;
-
-    // Setting 3B cutoff
-    // Affects the 3B polynomials
-    cutoff3b_ = 5.0;
-
-    ////////////////////////
-    // Evaluation batches //
-    ////////////////////////
-
-    // Maximum number in the batch for the 1B evaluation
-    maxNMonEval_ = 1024;
-    // Maximum number in the batch for the 2B evaluation
-    maxNDimEval_ = 1024;
-    // Maximum number in the batch for the 3B evaluation
-    maxNTriEval_ = 1024;
-
-    //////////////////////////////////
-    // Periodic boundary conditions //
-    //////////////////////////////////
-
     /////////////////////////////
     // Add monomer information //
     /////////////////////////////
@@ -663,74 +708,36 @@ void System::Initialize() {
     // and monomer id, such as number of sites, and orders the monomers
     AddMonomerInfo();
 
-    //    // First try to do it. If Json file is not loaded, monomer info will not be there and need to wait.
-    //
-    //    // Copy data inc ase initialization is supposed to fail because monomer is in json instead of hardcoded
-    //    std::vector<double> xyz_cp = xyz_;
-    //    std::vector<std::string> atoms_cp = atoms_;
-    //    std::vector<int> atom_tag_cp = atom_tag_;
-    //    std::vector<std::string> monomers_cp = monomers_;
-    //    std::vector<size_t> sites_cp = sites_;
-    //    std::vector<size_t> nat_cp = nat_;
-    //    try {
-    //        AddMonomerInfo();
-    //    } catch (CUException e) {
-    //        if (monomer_json_read_) {
-    //            std::string text = std::string(e.what()) + std::string("\nMonomer id not found in json file or
-    //            hardcoded"); throw CUException(__func__, __FILE__, __LINE__, text);
-    //        }
-    //        // Revert back possible changes
-    //        xyz_ = xyz_cp;
-    //        atoms_ = atoms_cp;
-    //        atom_tag_ = atom_tag_cp;
-    //        monomers_ = monomers_cp;
-    //        sites_ = sites_cp;
-    //        nat_ = nat_cp;
-    //        return;
-    //    }
-
     // Setting the number of molecules and number of monomers
     nummol = molecules_.size();
     nummon_ = monomers_.size();
 
-    ////////////////////
-    // ELECTROSTATICS //
-    ////////////////////
-
-    // Setting dipole tolerance to a consrvative value
-    // TODO make it be error/dipole, not total error as it is now
-    diptol_ = 1E-16;
-    // Sets the maximum number of iteartions in the induced dipole
-    // calculation. Will assume no convergence if this number is reached
-    maxItDip_ = 100;
-    // Sets the default method to calculate induced dipoles to ASPC
-    dipole_method_ = "cg";
-
     // Setting PBC to false by default
-    SetPBC();
+    SetPBC(box_);
 
     // Set C6 for long range pme
     SetC6LongRange();
 
-    // Define the virial vector
-    virial_ = std::vector<double>(9, 0.0);
+    // Set LJ for long range pme
+    SetLJLongRange();
 
     // With the information previously set, we initialize the
     // electrostatics class
-    // TODO: Do grads set to true for now. Needs to be fixed
     if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                islocal_, atom_tag_, true, diptol_, maxItDip_, dipole_method_);
 
-    // TODO Is this OK? Order of GetReal is input order.
+    // And the dispersion class
     std::vector<double> xyz_real = GetRealXyz();
-    // TODO modify c6_long_range
     if (mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
-    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, enforce_ttm_for_idx_, islocal_, true, box_);
 
-    grid_fftdim_elec_ = std::vector<int>{};
-    grid_fftdim_disp_ = std::vector<int>{};
+    // And the Lennard-Jones class
+    if (mpi_initialized_) lennardJonesE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+    lennardJonesE_.Initialize(lj_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+
+    // And buckingham class
+    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, enforce_ttm_for_idx_, islocal_, true, box_);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -749,38 +756,6 @@ void System::InitializePME() {
     std::cout << std::scientific << std::setprecision(10);
 #endif
 
-    /////////////
-    // CUTOFFS //
-    /////////////
-
-    // Setting 2B cutoff
-    // Affects the 2B dispersion and 2B polynomials
-    // TODO make it effective for electrostatics too
-    cutoff2b_ = 50.0;
-
-    // Setting 3B cutoff
-    // Affects the 3B polynomials
-    cutoff3b_ = 5.0;
-
-    ////////////////////////
-    // Evaluation batches //
-    ////////////////////////
-
-    // Maximum number in the batch for the 1B evaluation
-    maxNMonEval_ = 1024;
-    // Maximum number in the batch for the 2B evaluation
-    maxNDimEval_ = 1024;
-    // Maximum number in the batch for the 3B evaluation
-    maxNTriEval_ = 1024;
-
-    //////////////////////////////////
-    // Periodic boundary conditions //
-    //////////////////////////////////
-
-    /////////////////////////////
-    // Add monomer information //
-    /////////////////////////////
-
     // Retrieves all the monomer information given the coordinates
     // and monomer id, such as number of sites, and orders the monomers
     numat_ = 0;
@@ -790,41 +765,27 @@ void System::InitializePME() {
     nummol = 0;
     nummon_ = 0;
 
-    ////////////////////
-    // ELECTROSTATICS //
-    ////////////////////
-
-    // Setting dipole tolerance to a consrvative value
-    // TODO make it be error/dipole, not total error as it is now
-    diptol_ = 1E-16;
-    // Sets the maximum number of iteartions in the induced dipole
-    // calculation. Will assume no convergence if this number is reached
-    maxItDip_ = 100;
-    // Sets the default method to calculate induced dipoles to ASPC
-    dipole_method_ = "cg";
-
     // Setting PBC to false by default
-    SetPBC();
+    SetPBC(box_);
 
     // Set C6 for long range pme
     SetC6LongRange();
 
-    // Define the virial vector
-    virial_ = std::vector<double>(9, 0.0);
-
+    // Set LJ for long range pme
+    SetLJLongRange();
     // With the information previously set, we initialize the
     // electrostatics class
-    // TODO: Do grads set to true for now. Needs to be fixed
     if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                islocal_, atom_tag_, true, diptol_, maxItDip_, dipole_method_);
 
-    // TODO Is this OK? Order of GetReal is input order.
     // std::vector<double> xyz_real = GetRealXyz();
     std::vector<double> xyz_real = {};
-    // TODO modify c6_long_range
     if (mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+
+    if (mpi_initialized_) lennardJonesE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+    lennardJonesE_.Initialize(lj_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
     // buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
 
     // We are done. Setting initialized_ to true
@@ -889,6 +850,7 @@ void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
     repdisp_j_ = j;
     dispersionE_.SetJsonDispersionRepulsion(repdisp_j_);
     buckinghamE_.SetJsonDispersionRepulsion(repdisp_j_);
+    lennardJonesE_.SetJsonLennardJones(repdisp_j_);
 }
 
 void System::SetUpFromJsonMonomers(nlohmann::json j) {
@@ -900,6 +862,7 @@ void System::SetUpFromJsonMonomers(nlohmann::json j) {
     electrostaticE_.SetJsonMonomers(monomers_j_);
     dispersionE_.SetJsonMonomers(monomers_j_);
     buckinghamE_.SetJsonMonomers(monomers_j_);
+    lennardJonesE_.SetJsonMonomers(monomers_j_);
 }
 
 void System::SetUpFromJson(nlohmann::json j) {
@@ -907,8 +870,10 @@ void System::SetUpFromJson(nlohmann::json j) {
     // Default: no box (empty vector)
     std::vector<double> box;
     try {
+        std::cout << j << std::endl;
         std::vector<double> box2 = j["MBX"]["box"];
         box = box2;
+        std::cout << j << std::endl;
     } catch (...) {
         box.clear();
         std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
@@ -1142,6 +1107,28 @@ void System::SetUpFromJson(nlohmann::json j) {
     SetTTMnrgPairs(ttm_pairs);
     mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
 
+    std::vector<std::pair<std::string, std::string>> ignore_dispersion;
+    try {
+        std::vector<std::pair<std::string, std::string>> ignore_dispersion2 = j["MBX"]["ignore_dispersion"];
+        ignore_dispersion = ignore_dispersion2;
+    } catch (...) {
+        ignore_dispersion.clear();
+        std::cerr << "**WARNING** \"ignore_dispersion\" is not defined in json file. Using empty list.\n";
+    }
+    SetIgnoreDispersionPairs(ignore_dispersion);
+    mbx_j_["MBX"]["ignore_dispersion"] = ignore_disp_;
+
+    std::vector<std::pair<std::string, std::string>> use_lennard_jones;
+    try {
+        std::vector<std::pair<std::string, std::string>> use_lennard_jones2 = j["MBX"]["use_lennard_jones"];
+        use_lennard_jones = use_lennard_jones2;
+    } catch (...) {
+        use_lennard_jones.clear();
+        std::cerr << "**WARNING** \"use_lennard_jones\" is not defined in json file. Using empty list.\n";
+    }
+    SetLennardJonesPairs(use_lennard_jones);
+    mbx_j_["MBX"]["ttm_pairs"] = lj_pairs_;
+
     std::vector<std::string> ff_mons;
     try {
         std::vector<std::string> ff_mons2 = j["MBX"]["ff_mons"];
@@ -1256,6 +1243,8 @@ void System::SetUpFromJson(char *json_file) {
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
        "ff_mons" : [],
+       "ignore_dispersion" : [],
+       "use_lennard_jones" : [],
        "ignore_1b_poly" : [],
        "ignore_2b_poly" : [],
        "ignore_3b_poly" : [],
@@ -1288,8 +1277,12 @@ void System::SetUpFromJson(char *json_file) {
                                   {"grid_fftdim_disp", nlohmann::json::array()},
                                   {"spline_order_disp", 6},
                                   {"ttm_pairs", nlohmann::json::array()},
+                                  {"ignore_dispersion", nlohmann::json::array()},
+                                  {"use_lennard_jones", nlohmann::json::array()},
                                   {"ff_mons", nlohmann::json::array()},
                                   {"connectivity_file", ""},
+                                  {"nonbonded_file", ""},
+                                  {"monomers_file", ""},
                                   {"ignore_1b_poly", nlohmann::json::array()},
                                   {"ignore_2b_poly", nlohmann::json::array()},
                                   {"ignore_3b_poly", nlohmann::json::array()}}},
@@ -1337,6 +1330,9 @@ std::string System::GetCurrentSystemConfig() {
     ss << std::left << std::setw(25) << "Ewald Alpha Disp:" << disp_alpha_ << std::endl;
     ss << std::left << std::setw(25) << "Grid Dens Disp:" << disp_grid_density_ << std::endl;
     ss << std::left << std::setw(25) << "Spline Order Disp:" << disp_spline_order_ << std::endl;
+    ss << std::left << std::setw(25) << "Ewald Alpha LJ:" << lj_alpha_ << std::endl;
+    ss << std::left << std::setw(25) << "Grid Dens LJ:" << lj_grid_density_ << std::endl;
+    ss << std::left << std::setw(25) << "Spline Order LJ:" << lj_spline_order_ << std::endl;
 
     ss << std::left << std::setw(25) << "TTM-pairs:";
     for (size_t i = 0; i < buck_pairs_.size(); i++) {
@@ -1612,6 +1608,11 @@ void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connecti
 double System::Energy(bool do_grads) {
     // Check if system has been initialized
     // If not, throw exception
+
+    if (!initialized_) {
+        SetUpFromJson();
+    }
+
     if (!initialized_) {
         std::string text =
             std::string("System has not been initialized. ") + std::string("Energy calculation not possible.");
@@ -1668,6 +1669,13 @@ double System::Energy(bool do_grads) {
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
 
+    double elj = 0.0;
+    if (lj_pairs_.size() > 0) elj = GetLennardJones(do_grads);
+
+#ifdef TIMING
+    auto t31 = std::chrono::high_resolution_clock::now();
+#endif
+
     // double e3b = 0.0;
     double e3b = Get3B(do_grads);
 
@@ -1684,7 +1692,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + Eelec;
+    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + elj + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;
@@ -1694,6 +1702,7 @@ double System::Energy(bool do_grads) {
               << "3B = " << e3b << std::endl
               << "Disp = " << edisp << std::endl
               << "Buck = " << ebuck << std::endl
+              << "LJ = " << elj << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
 #endif
@@ -1706,8 +1715,10 @@ double System::Energy(bool do_grads) {
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2b - t2a).count() << " milliseconds\n";
     std::cerr << "System::rep(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2b).count() << " milliseconds\n";
+    std::cerr << "System::LJ(grad=" << do_grads << ") "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t31 - t3).count() << " milliseconds\n";
     std::cerr << "System::3b(grad=" << do_grads << ") "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds\n";
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t31).count() << " milliseconds\n";
     std::cerr << "System::electrostatics(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() << " milliseconds\n";
     std::cerr << "TotalEnergy(grad=" << do_grads << ") "
@@ -2598,6 +2609,30 @@ void System::SetC6LongRange() {
 #endif  // DEBUG
 }
 
+void System::SetLJLongRange() {
+    // Set virtual sites for each monomer type
+    size_t fi_mon = 0;
+    size_t fi_atoms = 0;
+    lj_lr_ = std::vector<double>(numat_, 0.0);
+    for (size_t k = 0; k < mon_type_count_.size(); k++) {
+        std::string mon = mon_type_count_[k].first;
+        size_t nmon = mon_type_count_[k].second;
+        size_t natoms = nat_[fi_mon];
+
+        systools::SetLJLongRange(lj_lr_, mon, nmon, natoms, fi_atoms, repdisp_j_);
+        fi_mon += nmon;
+        fi_atoms += nmon * natoms;
+    }
+
+#ifdef DEBUG
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "All lj_lr after setting them\n";
+    std::cerr << lj_lr_[0];
+    for (size_t i = 1; i < lj_lr_.size(); i++) std::cerr << ", " << lj_lr_[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetVSites() {
@@ -2643,6 +2678,28 @@ double System::Dispersion(bool do_grads, bool use_ghost) {
     SetPBC(box_);
 
     energy_ = GetDispersion(do_grads, use_ghost);
+
+    return energy_;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::LennardJones(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Dispersion Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
+
+    SetPBC(box_);
+
+    energy_ = GetLennardJones(do_grads, use_ghost);
 
     return energy_;
 }
@@ -2807,9 +2864,21 @@ void System::SetEwaldDispersion(double alpha, double grid_density, int spline_or
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void System::SetEwaldLennardJones(double alpha, double grid_density, int spline_order) {
+    lj_alpha_ = alpha;
+    lj_grid_density_ = grid_density;
+    lj_spline_order_ = spline_order;
+    lennardJonesE_.setEwaldAlpha(alpha);
+    lennardJonesE_.SetEwaldGridDensity(grid_density);
+    lennardJonesE_.SetEwaldSplineOrder(spline_order);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 void System::SetEwald(double alpha, double grid_density, int spline_order) {
     SetEwaldElectrostatics(alpha, grid_density, spline_order);
     SetEwaldDispersion(alpha, grid_density, spline_order);
+    SetEwaldLennardJones(alpha, grid_density, spline_order);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2879,10 +2948,35 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
         }
         count += 3 * nat_[i];
     }
-
-    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersion(real_grad, &virial_, use_ghost);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
+        }
+        count += 3 * nat_[i];
+    }
+    return e;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::GetLennardJones(bool do_grads, bool use_ghost) {
+    std::vector<double> xyz_real(3 * numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
+        }
+        count += 3 * nat_[i];
+    }
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3 * numat_, 0.0);
+    double e = lennardJonesE_.GetLennardJones(real_grad, &virial_, use_ghost);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {
@@ -2907,7 +3001,7 @@ double System::GetDispersionPME(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPME(real_grad, &virial_, use_ghost);
 
@@ -2934,9 +3028,63 @@ double System::GetDispersionPMElocal(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPMElocal(real_grad, &virial_, use_ghost);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
+        }
+        count += 3 * nat_[i];
+    }
+    return e;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::GetLennardJonesPME(bool do_grads, bool use_ghost) {
+    std::vector<double> xyz_real(3 * numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
+        }
+        count += 3 * nat_[i];
+    }
+
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3 * numat_, 0.0);
+    double e = lennardJonesE_.GetLennardJonesPME(real_grad, &virial_, use_ghost);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
+        }
+        count += 3 * nat_[i];
+    }
+    return e;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::GetLennardJonesPMElocal(bool do_grads, bool use_ghost) {
+    std::vector<double> xyz_real(3 * numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
+        }
+        count += 3 * nat_[i];
+    }
+
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3 * numat_, 0.0);
+    double e = lennardJonesE_.GetLennardJonesPMElocal(real_grad, &virial_, use_ghost);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {
@@ -2959,6 +3107,7 @@ void System::SetBoxPMElocal(std::vector<double> box) {
 
     dispersionE_.SetBoxPMElocal(box);
     electrostaticE_.SetBoxPMElocal(box);
+    lennardJonesE_.SetBoxPMElocal(box);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

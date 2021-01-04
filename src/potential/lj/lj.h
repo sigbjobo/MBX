@@ -32,8 +32,8 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef DISPERSION_NEW_H
-#define DISPERSION_NEW_H
+#ifndef LENNARDJONES_H
+#define LENNARDJONES_H
 
 #include <vector>
 
@@ -45,7 +45,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <omp.h>
 #endif
 
-#include "potential/dispersion/disptools.h"
+#include "potential/lj/lj.h"
+#include "potential/lj/ljtools.h"
 #include "potential/electrostatics/helpme.h"
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
@@ -57,36 +58,35 @@ typedef int MPI_Comm;
 #endif
 
 /**
- * @file dispersion.h
- * @brief Dispersion class definition, along with all its member functions
+ * @file lj.h
+ * @brief Lennard Jones class definition, along with all its member functions
  * and variables
  */
 
 /**
- * @namespace disp
- * @brief Contains all the dispersion related functions
+ * @namespace lj
+ * @brief Encloses the functions related to classical lennard-jones.
  */
-namespace disp {
+namespace lj {
 
 /**
- * @class Dispersion
- * @brief Class that calculates the dispersion energy of a system given its information
+ * @class LennardJones
+ * @brief Class that calculates the Lennard-Jones energy of a system given its information
  */
-class Dispersion {
+class LennardJones {
    public:
     /**
      * @brief Default constructor for the class
      */
-    Dispersion(){};
+    LennardJones(){};
 
     /**
      * @brief Default destructor for the class
      */
-    ~Dispersion(){};
+    ~LennardJones(){};
 
     /**
      * @brief Initializes the class with the relevant information to know the system
-     * @param[in] C6_long_range Vector of doubles with the "dispersion charge" of each atom
      * @param[in] sys_xyz Vector of doubles with the xyz coordinates in system order
      * @param[in] mon_id Vector of stings witht he monomer ids of each monomer
      * @param[in] num_atoms Vector of size_t witht he number of atoms of each monomer
@@ -95,7 +95,7 @@ class Dispersion {
      * @param[in] do_grads Bool specifying if grads must be calculated or not
      * @param[in] box Vector of 9 elements (or 0) containing the box vectors (v1x,v1y,v1z,v2x..)
      */
-    void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
+    void Initialize(const std::vector<double> sys_ljchg, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
                     const std::vector<size_t> &islocal_, const bool do_grads = true,
@@ -111,13 +111,13 @@ class Dispersion {
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
     /**
-     * @brief Calculates the dispersion energy
+     * @brief Calculates the Lennard-Jones energy
      * @param[in,out] grad Gradients of the system. Will be updated on exit.
      * @param[in,out] virial Pointer to a vector containing the virial. Will be updated on exit
      * @param[in] use_ghost Indicates if ghost monomers will be used or not
      * @return Dispersion energy
      */
-    double GetDispersion(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetLennardJones(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
     /**
      * @brief Calculates the dispersion energy __CHRIS_HELP_DOCS__
@@ -126,7 +126,7 @@ class Dispersion {
      * @param[in] use_ghost Indicates if ghost monomers will be used or not
      * @return Dispersion energy
      */
-    double GetDispersionPME(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetLennardJonesPME(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
     /**
      * @brief Calculates the dispersion energy __CHRIS_HELP_DOCS__
@@ -135,7 +135,7 @@ class Dispersion {
      * @param[in] use_ghost Indicates if ghost monomers will be used or not
      * @return Dispersion energy
      */
-    double GetDispersionPMElocal(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetLennardJonesPMElocal(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
     /**
      * @brief Updates the dynamic system information
@@ -143,17 +143,15 @@ class Dispersion {
      * @param[in] do_grads Indicates if gradient swill be calculated or not
      * @param[in] cutoff Cutoff of the real space
      * @param[in] box Vector of 9 elements (or 0) containing the box vectors (v1x,v1y,v1z,v2x..)
-     * @param[in] ignore_disp Pairs for which dispersion will be ignored
      */
-    void SetNewParameters(const std::vector<double> &xyz,
-                          std::vector<std::pair<std::string, std::string> > &ignore_disp, bool do_grads,
-                          const double cutoff, const std::vector<double> &box);
+    void SetNewParameters(const std::vector<double> &xyz, std::vector<std::pair<std::string, std::string> > use_lj,
+                          bool do_grads, const double cutoff, const std::vector<double> &box);
 
     /**
      * @brief Sets the json object containing extra info about non-bonded parameters in the class
      * @param[in] repdisp_j Json object with the parameters
      */
-    void SetJsonDispersionRepulsion(nlohmann::json repdisp_j);
+    void SetJsonLennardJones(nlohmann::json repdisp_j);
 
     /**
      * @brief Sets the json object containing extra info about monomers
@@ -246,11 +244,11 @@ class Dispersion {
     /**
      * @brief Returns the dispersion field variable in system order in the class
      */
-    std::vector<double> GetSystemDispersionField();
+    std::vector<double> GetSystemLennardJonesField();
     /**
      * @brief Returns the dispersion field variable in internal in the class
      */
-    std::vector<double> GetInternalDispersionField();
+    std::vector<double> GetInternalLennardJonesField();
     /**
      * @brief Returns the xyz variable in system order in the class
      */
@@ -270,11 +268,11 @@ class Dispersion {
     /**
      * @brief Returns the c6 charge variable in system order in the class
      */
-    std::vector<double> GetSystemC6LongRange();
+    std::vector<double> GetSystemLjLongRange();
     /**
      * @brief Returns the c6 charge variable internal order in the class
      */
-    std::vector<double> GetInternalC6LongRange();
+    std::vector<double> GetInternalLjLongRange();
     /**
      * @brief Returns the  variable in the class
      */
@@ -294,7 +292,7 @@ class Dispersion {
     /**
      * @brief Gets the current dispersion repulsion json
      */
-    nlohmann::json GetJsonDispersionRepulsion();
+    nlohmann::json GetJsonLennardJones();
     /**
      * @brief Gets the current monomer info json
      */
@@ -302,9 +300,9 @@ class Dispersion {
 
    private:
     void ReorderData();
-    void CalculateDispersion(bool use_ghost = 0);
-    void CalculateDispersionPME(bool use_ghost = 0);
-    void CalculateDispersionPMElocal(bool use_ghost = 0);
+    void CalculateLennardJones(bool use_ghost = 0);
+    void CalculateLennardJonesPME(bool use_ghost = 0);
+    void CalculateLennardJonesPMElocal(bool use_ghost = 0);
 
     // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...
     std::vector<double> sys_xyz_;
@@ -318,10 +316,10 @@ class Dispersion {
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
     std::vector<size_t> num_atoms_;
-    // Vector that contains the C6 used at long range
-    std::vector<double> c6_long_range_;
-    // Vector that contains the C6 used at long range
-    std::vector<double> sys_c6_long_range_;
+    // Vector that contains the LJ chg used at long range
+    std::vector<double> lj_long_range_;
+    // Vector that contains the LJ chg used at long range
+    std::vector<double> sys_lj_long_range_;
     // Vector that contains all different monomer types and the number of
     // monomers of each type.
     std::vector<std::pair<std::string, size_t> > mon_type_count_;
@@ -347,7 +345,7 @@ class Dispersion {
     // Max number of monomers
     size_t maxnmon_;
     // Dispersion energy
-    double disp_energy_;
+    double lj_energy_;
     // box of the system
     std::vector<double> box_;
     // box in ABCabc notation
@@ -384,10 +382,10 @@ class Dispersion {
     // Json object with extra user-defined monomer properties
     nlohmann::json mon_j_;
 
-    // Pairs for which dispersion will be ignored
-    std::vector<std::pair<std::string, std::string> > ignore_disp_;
+    // Pairs for which Lennard Jones will be calculated
+    std::vector<std::pair<std::string, std::string> > use_lj_;
 };
 
-}  // namespace disp
+}  // namespace lj
 
 #endif
