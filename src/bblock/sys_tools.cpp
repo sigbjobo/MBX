@@ -176,9 +176,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             } else if (mon[i] == "ch4") {
                 sites.push_back(5);
                 nat.push_back(5);
-            } else if (mon[i] == "co2" || mon[i] == "co2100" || mon[i] == "co295" || mon[i] == "co290" ||
-                       mon[i] == "co285" || mon[i] == "co280" || mon[i] == "co2cm5100" || mon[i] == "co2cm595" ||
-                       mon[i] == "co2cm590" || mon[i] == "co2cm585" || mon[i] == "co2cm580") {
+            } else if (mon[i] == "co2" || mon[i] == "co2cm5100" || mon[i] == "co2cm595" || mon[i] == "co2cm590" ||
+                       mon[i] == "co2cm585" || mon[i] == "co2cm580") {
                 sites.push_back(3);
                 nat.push_back(3);
             } else if (mon[i] == "h4_dummy") {
@@ -668,8 +667,8 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         exc13.insert(std::make_pair(2, 3));
     }
     // MBX v0.2.3a
-    if (mon == "co2" || mon == "co2100" || mon == "co295" || mon == "co290" || mon == "co285" || mon == "co280" ||
-        mon == "co2cm5100" || mon == "co2cm595" || mon == "co2cm590" || mon == "co2cm585" || mon == "co2cm580") {
+    if (mon == "co2" || mon == "co2cm5100" || mon == "co2cm595" || mon == "co2cm590" || mon == "co2cm585" ||
+        mon == "co2cm580") {
         exc12.insert(std::make_pair(0, 1));
         exc12.insert(std::make_pair(0, 2));
         exc13.insert(std::make_pair(1, 2));
@@ -873,8 +872,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv * nsites + 3] = 0.13464325 * CHARGECON;
             charges[fst_ind + nv * nsites + 4] = 0.13464325 * CHARGECON;
         }
-    } else if (mon_id == "co2" || mon_id == "co2100" || mon_id == "co295" || mon_id == "co290" || mon_id == "co285" ||
-               mon_id == "co280") {
+    } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv * nsites + 0] = 0.706027 * CHARGECON;
             charges[fst_ind + nv * nsites + 1] = -0.3530135 * CHARGECON;
@@ -1033,13 +1031,18 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 3] = 0.38978363;
             polfac[fst_ind + nv * nsites + 4] = 0.38978363;
         }
-    } else if (mon_id == "co2" || mon_id == "co2100" || mon_id == "co295" || mon_id == "co290" || mon_id == "co285" ||
-               mon_id == "co280" || mon_id == "co2cm5100" || mon_id == "co2cm595" || mon_id == "co2cm590" ||
-               mon_id == "co2cm585" || mon_id == "co2cm580") {
+    } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites + 0] = 1.471677;
             polfac[fst_ind + nv * nsites + 1] = 0.769790;
             polfac[fst_ind + nv * nsites + 2] = 0.769790;
+        }
+    } else if (mon_id == "co2cm5100" || mon_id == "co2cm595" || mon_id == "co2cm590" || mon_id == "co2cm585" ||
+               mon_id == "co2cm580") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 1.2046;
+            polfac[fst_ind + nv * nsites + 1] = 0.6722;
+            polfac[fst_ind + nv * nsites + 2] = 0.6722;
         }
     } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1147,13 +1150,18 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 3] = 0.38978363;
             pol[fst_ind + nv * nsites + 4] = 0.38978363;
         }
-    } else if (mon_id == "co2" || mon_id == "co2100" || mon_id == "co295" || mon_id == "co290" || mon_id == "co285" ||
-               mon_id == "co280" || mon_id == "co2cm5100" || mon_id == "co2cm595" || mon_id == "co2cm590" ||
-               mon_id == "co2cm585" || mon_id == "co2cm580") {
+    } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv * nsites + 0] = 1.471677;
             pol[fst_ind + nv * nsites + 1] = 0.769790;
             pol[fst_ind + nv * nsites + 2] = 0.769790;
+        }
+    } else if (mon_id == "co2cm5100" || mon_id == "co2cm595" || mon_id == "co2cm590" || mon_id == "co2cm585" ||
+               mon_id == "co2cm580") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 1.2046;
+            pol[fst_ind + nv * nsites + 1] = 0.6722;
+            pol[fst_ind + nv * nsites + 2] = 0.6722;
         }
     } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1291,8 +1299,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 4] = 6.064748037;  // H
         }
 
-    } else if (mon_id == "co2" || mon_id == "co2100" || mon_id == "co295" || mon_id == "co290" || mon_id == "co285" ||
-               mon_id == "co280" || mon_id == "co2cm5100" || mon_id == "co2cm595" || mon_id == "co2cm590" ||
+    } else if (mon_id == "co2" || mon_id == "co2cm5100" || mon_id == "co2cm595" || mon_id == "co2cm590" ||
                mon_id == "co2cm585" || mon_id == "co2cm580") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 17.91673320223304547491;      // C

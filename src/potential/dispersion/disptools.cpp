@@ -352,14 +352,12 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     std::vector<double> C6, d6;
     size_t nt2, i, j;
 
-    if (mon_id1 == "co2" || mon_id1 == "co2100" || mon_id1 == "co295" || mon_id1 == "co290" || mon_id1 == "co285" ||
-        mon_id1 == "co280" || mon_id1 == "co2cm5100" || mon_id1 == "co2cm595" || mon_id1 == "co2cm590" ||
-        mon_id1 == "co2cm585" || mon_id1 == "co2cm580")
-        mon_id1 = "co2";
-    if (mon_id2 == "co2" || mon_id2 == "co2100" || mon_id2 == "co295" || mon_id2 == "co290" || mon_id2 == "co285" ||
-        mon_id2 == "co280" || mon_id2 == "co2cm5100" || mon_id2 == "co2cm595" || mon_id2 == "co2cm590" ||
-        mon_id2 == "co2cm585" || mon_id2 == "co2cm580")
-        mon_id2 = "co2";
+    if (mon_id1 == "co2cm5100" || mon_id1 == "co2cm595" || mon_id1 == "co2cm590" || mon_id1 == "co2cm585" ||
+        mon_id1 == "co2cm580")
+        mon_id1 = "co2cm5";
+    if (mon_id2 == "co2cm5100" || mon_id2 == "co2cm595" || mon_id2 == "co2cm590" || mon_id2 == "co2cm585" ||
+        mon_id2 == "co2cm580")
+        mon_id2 = "co2cm5";
 
     out_C6 = 0.0;
     out_d6 = 0.0;
@@ -408,15 +406,6 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         out_C6 = 0.0;
         out_d6 = 0.0;
     }
-
-    if (mon_id1 == "co2" || mon_id1 == "co2100" || mon_id1 == "co295" || mon_id1 == "co290" || mon_id1 == "co285" ||
-        mon_id1 == "co280" || mon_id1 == "co2cm5100" || mon_id1 == "co2cm595" || mon_id1 == "co2cm590" ||
-        mon_id1 == "co2cm585" || mon_id1 == "co2cm580")
-        mon_id1 = "co2";
-    if (mon_id2 == "co2" || mon_id2 == "co2100" || mon_id2 == "co295" || mon_id2 == "co290" || mon_id2 == "co285" ||
-        mon_id2 == "co280" || mon_id2 == "co2cm5100" || mon_id2 == "co2cm595" || mon_id2 == "co2cm590" ||
-        mon_id2 == "co2cm585" || mon_id2 == "co2cm580")
-        mon_id2 = "co2";
 
     if (done_with_it) return true;
     std::vector<size_t> types1, types2;
@@ -670,6 +659,30 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.64236);  // A^(-1)
         d6.push_back(3.64236);  // A^(-1)
         d6.push_back(3.52744);  // A^(-1)
+
+    } else if (mon_id1 == "co2cm5" && mon_id2 == "co2cm5") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(321.00932864);  // kcal/mol * A^(-6) C -- C
+        C6.push_back(219.55020747);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(219.55020747);  // kcal/mol * A^(-6) O -- C
+        C6.push_back(170.09525896);  // kcal/mol * A^(-6) O -- O
+
+        d6.push_back(3.43054);  // A^(-1)
+        d6.push_back(3.82894);  // A^(-1)
+        d6.push_back(3.82894);  // A^(-1)
+        d6.push_back(3.92759);  // A^(-1)
 
     } else if ((mon_id1 == "ch4" && mon_id2 == "ch4") || (mon_id1 == "ch4_0p" && mon_id2 == "ch4_0p")) {
         // Define the type of atom in each mon

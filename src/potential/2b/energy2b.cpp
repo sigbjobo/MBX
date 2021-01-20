@@ -107,21 +107,6 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
 
-    } else if (mon1 == "co2100" and mon2 == "co2100") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "co295" and mon2 == "co295") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "co290" and mon2 == "co290") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "co285" and mon2 == "co285") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "co280" and mon2 == "co280") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -232,21 +217,6 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
 
-    } else if (mon1 == "co2100" and mon2 == "co2100") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    } else if (mon1 == "co295" and mon2 == "co295") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    } else if (mon1 == "co290" and mon2 == "co290") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    } else if (mon1 == "co285" and mon2 == "co285") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    } else if (mon1 == "co280" and mon2 == "co280") {
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
