@@ -668,13 +668,13 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(243.7007);  // kcal/mol * A^(-6)  A--A
-        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
-        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
-        C6.push_back(39.9906);   // kcal/mol * A^(-6)  B--B
-        d6.push_back(3.11493);   // A^(-1) A--A
-        d6.push_back(3.4174);    // A^(-1) A--B
-        d6.push_back(3.4174);    // A^(-1) A--B
-        d6.push_back(3.78007);   // A^(-1) B--B
+        C6.push_back(98.6092);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(98.6092);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(39.9906);  // kcal/mol * A^(-6)  B--B
+        d6.push_back(3.09382);  // A^(-1) A--A
+        d6.push_back(3.44698);  // A^(-1) A--B
+        d6.push_back(3.44698);  // A^(-1) A--B
+        d6.push_back(3.83901);  // A^(-1) B--B
 
     } else if (mon_id1 == "ch4" && mon_id2 == "ch4") {
         // Define the type of atom in each mon

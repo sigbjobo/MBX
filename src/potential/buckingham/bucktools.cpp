@@ -402,14 +402,14 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         nt2 = 2;
 
         // Fill in (in order) the C6 and d6 coefficients
-        a.push_back(20413.5);  // kcal/mol A--A
-        a.push_back(3259.49);  // kcal/mol A--B
-        a.push_back(3259.49);  // kcal/mol A--B
-        a.push_back(965.289);  // kcal/mol B--B
-        b.push_back(3.11493);  // A^(-1) A--A
-        b.push_back(3.4174);   // A^(-1) A--B
-        b.push_back(3.4174);   // A^(-1) A--B
-        b.push_back(3.78007);  // A^(-1) B--B
+        a.push_back(19267.3);  // kcal/mol A--A
+        a.push_back(3232.98);  // kcal/mol A--B
+        a.push_back(3232.98);  // kcal/mol A--B
+        a.push_back(980.337);  // kcal/mol B--B
+        b.push_back(3.09382);  // A^(-1) A--A
+        b.push_back(3.44698);  // A^(-1) A--B
+        b.push_back(3.44698);  // A^(-1) A--B
+        b.push_back(3.83901);  // A^(-1) B--B
 
     } else if (mon_id1 == "ch4" && mon_id2 == "ch4") {
         // Define the type of atom in each mon
