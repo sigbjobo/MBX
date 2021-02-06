@@ -111,9 +111,10 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
             num_atoms_per_mol[i] = 1;
         else if (strcmp("cl", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 1;
-        else if (strcmp("co2", mol_names[i]) == 0 || strcmp("co2cm5100", mol_names[i]) == 0 ||
-                 strcmp("co2cm595", mol_names[i]) == 0 || strcmp("co2cm590", mol_names[i]) == 0 ||
-                 strcmp("co2cm585", mol_names[i]) == 0 || strcmp("co2cm580", mol_names[i]) == 0)
+        else if (strcmp("co2", mol_names[i]) == 0 || strcmp("co2cm5875", mol_names[i]) == 0 ||
+                 strcmp("co2cm5100", mol_names[i]) == 0 || strcmp("co2cm595", mol_names[i]) == 0 ||
+                 strcmp("co2cm590", mol_names[i]) == 0 || strcmp("co2cm585", mol_names[i]) == 0 ||
+                 strcmp("co2cm580", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 3;
         else if (strcmp("ch4", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 5;
@@ -684,9 +685,10 @@ void FixMBX::mbx_init() {
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0)
+            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm580", mol_names[mtype]) == 0)
                 na = 3;
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
@@ -732,9 +734,10 @@ void FixMBX::mbx_init() {
                     names.push_back("Cl");
                 } else if (strcmp("he", mol_names[mtype]) == 0) {
                     names.push_back("He");
-                } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                           strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                           strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0) {
+                } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm580", mol_names[mtype]) == 0) {
                     names.push_back("C");
                     names.push_back("O");
                     names.push_back("O");
@@ -903,9 +906,10 @@ void FixMBX::mbx_init_local() {
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0)
+            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm580", mol_names[mtype]) == 0)
                 na = 3;
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
@@ -949,9 +953,10 @@ void FixMBX::mbx_init_local() {
                     names.push_back("Cl");
                 } else if (strcmp("he", mol_names[mtype]) == 0) {
                     names.push_back("He");
-                } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                           strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                           strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0) {
+                } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm580", mol_names[mtype]) == 0) {
                     names.push_back("C");
                     names.push_back("O");
                     names.push_back("O");
@@ -1137,9 +1142,10 @@ void FixMBX::mbx_init_full() {
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0)
+            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm580", mol_names[mtype]) == 0)
                 na = 3;
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
@@ -1187,9 +1193,10 @@ void FixMBX::mbx_init_full() {
                     names.push_back("Cl");
                 } else if (strcmp("he", mol_names[mtype]) == 0) {
                     names.push_back("He");
-                } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                           strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                           strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0) {
+                } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                           strcmp("co2cm580", mol_names[mtype]) == 0) {
                     names.push_back("C");
                     names.push_back("O");
                     names.push_back("O");
@@ -1294,9 +1301,10 @@ void FixMBX::mbx_init_full() {
 
                 mbx_num_atoms_full++;
 
-            } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                       strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                       strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0) {
+            } else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                       strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                       strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                       strcmp("co2cm580", mol_names[mtype]) == 0) {
                 // add CO2 molecule
 
                 tagint anchor = tag_full[i];
@@ -1489,9 +1497,10 @@ void FixMBX::mbx_update_xyz() {
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0)
+            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm580", mol_names[mtype]) == 0)
                 na = 3;
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
@@ -1611,9 +1620,10 @@ void FixMBX::mbx_update_xyz_local() {
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0)
+            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm580", mol_names[mtype]) == 0)
                 na = 3;
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
@@ -1739,9 +1749,10 @@ void FixMBX::mbx_update_xyz_full() {
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5100", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm595", mol_names[mtype]) == 0 || strcmp("co2cm590", mol_names[mtype]) == 0 ||
-                     strcmp("co2cm585", mol_names[mtype]) == 0 || strcmp("co2cm580", mol_names[mtype]) == 0)
+            else if (strcmp("co2", mol_names[mtype]) == 0 || strcmp("co2cm5875", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm5100", mol_names[mtype]) == 0 || strcmp("co2cm595", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm590", mol_names[mtype]) == 0 || strcmp("co2cm585", mol_names[mtype]) == 0 ||
+                     strcmp("co2cm580", mol_names[mtype]) == 0)
                 na = 3;
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
