@@ -353,10 +353,10 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     size_t nt2, i, j;
 
     if (mon_id1 == "co2cm5100" || mon_id1 == "co2cm595" || mon_id1 == "co2cm590" || mon_id1 == "co2cm585" ||
-        mon_id1 == "co2cm580")
+        mon_id1 == "co2cm580" || mon_id1 == "co2cm5875")
         mon_id1 = "co2cm5";
     if (mon_id2 == "co2cm5100" || mon_id2 == "co2cm595" || mon_id2 == "co2cm590" || mon_id2 == "co2cm585" ||
-        mon_id2 == "co2cm580")
+        mon_id2 == "co2cm580" || mon_id2 == "co2cm5875")
         mon_id2 = "co2cm5";
 
     out_C6 = 0.0;
