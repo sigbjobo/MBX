@@ -9225,7 +9225,7 @@ x2b_A1B2_A1B2_v1x::x2b_A1B2_A1B2_v1x(std::string mon1, std::string mon2) {
         m_r2f = 9.000000000000000e+00;         // A
     }
 
-    if (mon1 == "co2cm585" && mon2 == "co2cm585") {
+    if (mon1 == "co2cm5875" && mon2 == "co2cm5875") {
         coefficients = std::vector<double>{-7.102469735543582e+01,   // 0
                                            -8.259367033595379e+01,   // 1
                                            -3.021957788960513e+02,   // 2
