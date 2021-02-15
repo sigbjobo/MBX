@@ -229,6 +229,39 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
  * the other one. At output, it will be modified so the coordinates
  * of monomer 3 are the closer image to monomer 1.
  */
+ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nat4,
+                         size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3, std::vector<double> &xyz4);
+/**
+ * @brief This function finds the monomers 2, 3 and 4 mirror image that is
+ * closer to the monomer 1 image.
+ *
+ * In periodic boundary conditions, it will look for the image of the monomer
+ * in xyz2 and xyz3 that is closer to the monomer in xyz1.
+ * This function assumes that
+ * all monomers in xyz1 are of the same type, and all monomers in xyz2 are
+ * also of the same type, and all monomers in xyz3 are
+ * also of the same type.
+ * Monomers in xyz1, xyz2, xyz3, and xyz4 can be of a different type.
+ * The monomers in xyz1, xyz2, and xyz3 have to be paired,
+ * meaning that monomer 1 in xyz1, monomer 1 in xyz2, and monomer 1
+ * in xyz3 are the first trimer
+ * @param[in] box Vector of 9 component with the 3 vectors of the box
+ * @param[in] nat1 Number of atoms of monomer 1
+ * @param[in] nat2 Number of atoms of monomer 2
+ * @param[in] nat3 Number of atoms of monomer 3
+ * @param[in] nat4 Number of atoms of monomer 4
+ * @param[in] nt Number of dimers
+ * @param[in,out] xyz1 coordinates of all the monomers 1, one after
+ * the other one. At output, it will be untouched.
+ * @param[in,out] xyz2 coordinates of all the monomers 2, one after
+ * the other one. At output, it will be modified so the coordinates
+ * @param[in,out] xyz3 coordinates of all the monomers 3, one after
+ * the other one. At output, it will be modified so the coordinates
+ * of monomer 3 are the closer image to monomer 1.
+ * @param[in,out] xyz4 coordinates of all the monomers 4, one after
+ * the other one. At output, it will be modified so the coordinates
+ * of monomer 4 are the closer image to monomer 1.
+*/
 void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,
                          size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3);
 
@@ -265,7 +298,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
                  std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-                 std::vector<size_t> &trimers, bool use_ghost = false);
+                 std::vector<size_t> &trimers, std::vector<size_t> &tetramers, bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer
