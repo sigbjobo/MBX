@@ -172,7 +172,25 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
                 pair_list.push_back(mon3);
             }
         }
-    }
+	
+    } else if (nmax == 4) {
+        // Loop over all the trimers
+        for (size_t i = 0; i < tetramers_.size(); i += nmax) {
+            // Get the initial order of each monomer in the trimer
+            size_t mon1 = initial_order_[tetramers_[i]].first;
+            size_t mon2 = initial_order_[tetramers_[i + 1]].first;
+            size_t mon3 = initial_order_[tetramers_[i + 2]].first;
+	    size_t mon3 = initial_order_[tetramers_[i + 3]].first;
+            // Add the dimers within the range [istart,iend)
+            if ((mon1 >= istart && mon1 < iend) || (mon2 >= istart && mon2 < iend) || (mon3 >= istart && mon3 < iend)|| (mon4 >= istart && mon4 < iend)) {
+                pair_list.push_back(mon1);
+                pair_list.push_back(mon2);
+                pair_list.push_back(mon3);
+		pair_list.push_back(mon4);
+            }
+        }
+	
+    } 
 
     return pair_list;
 }
