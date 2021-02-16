@@ -402,14 +402,15 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     }
 }
 
-  void GetCloseTetramerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nat3,
-			     size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3, std::vector<double> &xyz4) {
+  void GetCloseTetramerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,  size_t nat4,   size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3, std::vector<double> &xyz4) {
     size_t shift1 = 0;
     size_t shift2 = 0;
     size_t shift3 = 0;
+    size_t shift4 = 0;
     size_t coords1 = 3 * nat1;
     size_t coords2 = 3 * nat2;
     size_t coords3 = 3 * nat3;
+    size_t coords4 = 3 * nat4;
 
     for (size_t i = 0; i < nt; i++) {
         double x_rec = box_inv[0] * xyz1[shift1] + box_inv[3] * xyz1[shift1 + 1] + box_inv[6] * xyz1[shift1 + 2];
@@ -716,10 +717,10 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 			  if (!use_ghost && islsum == 4) include_tetramer = true;
 
 			  if (include_tetramer) {
-			    tetramer.push_back(mon_index[i]);
-			    tetramer.push_back(mon_index[ret_matches[j].first]);
-			    tetramer.push_back(mon_index[ret_matches[k].first]);
-			    tetramer.push_back(mon_index[ret_matches[l].first]);
+			    tetramers.push_back(mon_index[i]);
+			    tetramers.push_back(mon_index[ret_matches[j].first]);
+			    tetramers.push_back(mon_index[ret_matches[k].first]);
+			    tetramers.push_back(mon_index[ret_matches[l].first]);
 			  }	
 			}
 		      }
@@ -761,10 +762,10 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 			    if (!use_ghost && islsum == 4) include_tetramer = true;
 
 			    if (include_tetramer) {
-			      tetramer.push_back(mon_index[i]);
-			      tetramer.push_back(mon_index[jel]);
-			      tetramer.push_back(mon_index[kel]);
-			      tetramer.push_back(mon_index[lel]);
+			      tetramers.push_back(mon_index[i]);
+			      tetramers.push_back(mon_index[jel]);
+			      tetramers.push_back(mon_index[kel]);
+			      tetramers.push_back(mon_index[lel]);
 			    }	
 			  }
 			}
@@ -850,10 +851,10 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 			  if (!use_ghost && islsum == 4) include_tetramer = true;
 
 			  if (include_tetramer) {
-			    tetramer.push_back(mon_index[i]);
-			    tetramer.push_back(mon_index[jel]);
-			    tetramer.push_back(mon_index[kel]);
-			    tetramer.push_back(mon_index[lel]);
+			    tetramers.push_back(mon_index[i]);
+			    tetramers.push_back(mon_index[jel]);
+			    tetramers.push_back(mon_index[kel]);
+			    tetramers.push_back(mon_index[lel]);
 			  }
 			}
 		      }
@@ -898,10 +899,10 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 			  if (!use_ghost && islsum == 4) include_tetramer = true;
 
 			  if (include_tetramer) {
-			    tetramer.push_back(mon_index[i]);
-			    tetramer.push_back(mon_index[jel]);
-			    tetramer.push_back(mon_index[kel]);
-			    tetramer.push_back(mon_index[lel]);
+			    tetramers.push_back(mon_index[i]);
+			    tetramers.push_back(mon_index[jel]);
+			    tetramers.push_back(mon_index[kel]);
+			    tetramers.push_back(mon_index[lel]);
 			  }
 			}
 		      }

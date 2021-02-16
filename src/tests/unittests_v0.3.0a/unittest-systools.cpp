@@ -856,12 +856,14 @@ TEST_CASE("systools::AddClusters") {
                     bool use_pbc = box.size();
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
+		    std::vector<size_t> tetramers;
                     bool use_ghost = false;
 
                     systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          dimers, trimers, use_ghost);
+                                          dimers, trimers,tetramers, use_ghost);
                     REQUIRE(dimers.size() == 0);
                     REQUIRE(trimers.size() == 0);
+		    REQUIRE(tetramers.size() == 0);
                 }
 
                 SECTION("Cutoff long, all possible dimers") {
@@ -872,13 +874,15 @@ TEST_CASE("systools::AddClusters") {
                     bool use_pbc = box.size();
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
+		    std::vector<size_t> tetramers;
                     bool use_ghost = false;
 
                     systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          dimers, trimers, use_ghost);
+                                          dimers, trimers,tetramers, use_ghost);
                     REQUIRE(dimers.size() ==
                             nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
                     REQUIRE(trimers.size() == 0);
+		    REQUIRE(tetramers.size() == 0);
                 }
 
                 SECTION("Cutoff to get all the dimers below 1.1") {
@@ -889,6 +893,7 @@ TEST_CASE("systools::AddClusters") {
                     bool use_pbc = box.size();
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
+		    std::vector<size_t> tetramers;
                     bool use_ghost = false;
 
                     size_t expected_number_of_dimers = 0;
@@ -903,9 +908,10 @@ TEST_CASE("systools::AddClusters") {
                     }
 
                     systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          dimers, trimers, use_ghost);
+                                          dimers, trimers,tetramers, use_ghost);
                     REQUIRE(dimers.size() == expected_number_of_dimers * 2);
                     REQUIRE(trimers.size() == 0);
+		    REQUIRE(tetramers.size() == 0);
                 }
             }
 
@@ -918,12 +924,14 @@ TEST_CASE("systools::AddClusters") {
                     bool use_pbc = box.size();
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
+		    std::vector<size_t> tetramers;
                     bool use_ghost = false;
 
                     systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          dimers, trimers, use_ghost);
+                                          dimers, trimers,tetramers, use_ghost);
                     REQUIRE(dimers.size() == 0);
                     REQUIRE(trimers.size() == 0);
+		    REQUIRE(tetramers.size() == 0);
                 }
 
                 SECTION("Cutoff long, all possible dimers and trimers") {
@@ -934,13 +942,16 @@ TEST_CASE("systools::AddClusters") {
                     bool use_pbc = box.size();
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
-                    bool use_ghost = false;
+		    std::vector<size_t> tetramers;
+		    bool use_ghost = false;
 
                     systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          dimers, trimers, use_ghost);
+                                          dimers, trimers,tetramers, use_ghost);
                     REQUIRE(dimers.size() ==
                             nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
                     REQUIRE(trimers.size() == nmon * (nmon - 1) * (nmon - 2) /
+                                                  2);  // Combinations of nmon elements in groups of 3 n!/(n-3)!/3! * 2
+		    REQUIRE(tetramers.size() == nmon * (nmon - 1) * (nmon - 2)* (nmon - 3) /
                                                   2);  // Combinations of nmon elements in groups of 3 n!/(n-3)!/3! * 2
                 }
 
@@ -952,6 +963,7 @@ TEST_CASE("systools::AddClusters") {
                     bool use_pbc = box.size();
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
+		    std::vector<size_t> tetramers;
                     bool use_ghost = false;
 
                     size_t expected_number_of_dimers = 0;
@@ -979,15 +991,47 @@ TEST_CASE("systools::AddClusters") {
                                 }
                                 if ((sij < cutoff && sik < cutoff) || (sij < cutoff && sjk < cutoff) ||
                                     (sik < cutoff && sjk < cutoff))
-                                    expected_number_of_trimers++;
+				  expected_number_of_trimers++;
                             }
                         }
                     }
 
+		    size_t expected_number_of_tetramers = 0;
+                    for (size_t i = 0; i < nmon - 3; i++) {
+		      for (size_t j = i + 1; j < nmon - 2; j++) {
+			for (size_t k = j + 1; k < nmon-1; k++) {
+			  for (size_t m = k + 1; m < nmon; m++) {
+			    double sij = 0.0;
+			    double sik = 0.0;
+			    double sim = 0.0;
+			    double sjk = 0.0;
+			    double sjm = 0.0;
+			    double skm = 0.0;
+				 
+			    for (size_t l = 0; l < 3; l++) {
+			      sij += fabs(xyz[3 * fi[i] + l] - xyz[3 * fi[j] + l]);
+			      sik += fabs(xyz[3 * fi[i] + l] - xyz[3 * fi[k] + l]);
+			      sim += fabs(xyz[3 * fi[i] + l] - xyz[3 * fi[m] + l]);
+			      sjk += fabs(xyz[3 * fi[j] + l] - xyz[3 * fi[k] + l]);
+			      sjm += fabs(xyz[3 * fi[j] + l] - xyz[3 * fi[m] + l]);
+			      skm += fabs(xyz[3 * fi[k] + l] - xyz[3 * fi[m] + l]);
+		
+			    }
+			    
+			    if (int(sij<cutoff)+int(sik<cutoff)+int(sim<cutoff)+int(sjk<cutoff)+
+				int(sjm<cutoff)+int(skm<cutoff)>4)
+			      {
+				expected_number_of_tetramers++;
+			      }
+			  }
+                        }
+		      }
+		    }
                     systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          dimers, trimers, use_ghost);
+                                          dimers, trimers,tetramers, use_ghost);
                     REQUIRE(dimers.size() == expected_number_of_dimers * 2);
                     REQUIRE(trimers.size() == expected_number_of_trimers * 3);
+		    REQUIRE(tetramers.size() == expected_number_of_tetramers * 3);
                 }
             }
         }

@@ -180,7 +180,7 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
             size_t mon1 = initial_order_[tetramers_[i]].first;
             size_t mon2 = initial_order_[tetramers_[i + 1]].first;
             size_t mon3 = initial_order_[tetramers_[i + 2]].first;
-	    size_t mon3 = initial_order_[tetramers_[i + 3]].first;
+	    size_t mon4 = initial_order_[tetramers_[i + 3]].first;
             // Add the dimers within the range [istart,iend)
             if ((mon1 >= istart && mon1 < iend) || (mon2 >= istart && mon2 < iend) || (mon3 >= istart && mon3 < iend)|| (mon4 >= istart && mon4 < iend)) {
                 pair_list.push_back(mon1);
@@ -1626,8 +1626,7 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend,
     //}
 
     size_t nmon = monomers_.size();
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          dimers_, trimers_, use_ghost_);
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_, dimers_, trimers_, tetramers_, use_ghost_);
 }
 
 std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
@@ -1645,11 +1644,11 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
     //}
 
     size_t nmon = monomers_.size();
-    std::vector<size_t> dimers, trimers;
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          dimers, trimers, use_ghost_);
+    std::vector<size_t> dimers, trimers, tetramers;
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_, dimers, trimers, tetramers, use_ghost_);
     if (nmax == 2) return dimers;
-    return trimers;
+    if (nmax == 3) return trimers;
+    return tetramers;
 }
 
 void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map) {

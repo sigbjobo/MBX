@@ -8,10 +8,10 @@ module load cmake/3.12.4
 module load gcc
 
 if [ "$1" == "gnu" ]; then
-  rm -rf build install
+#  rm -rf build install
   cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=False -DCMAKE_CXX_FLAGS=" -fPIC -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
   cd build
-  make -j 8 --no-print-directory CXX=g++ CC=gcc
+  make -j 1 --no-print-directory CXX=g++ CC=gcc
   make install
   cd ../
 

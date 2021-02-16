@@ -1326,6 +1326,13 @@ class System {
     std::vector<size_t> trimers_;
 
     /**
+     * Vector that stores the tetramers computed by the AddClusters
+     * functions.  The vector stores the three indeces of a tetramers,
+     * one after the other one, in the internal order of the system.
+     */
+    std::vector<size_t> tetramers_;
+
+    /**
      * Vector that stores the gradients of the system in the onternal order
      * of the system.
      */
