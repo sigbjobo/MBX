@@ -1,0 +1,11 @@
+set(FRAGMENTED_SOURCES AtomId.cpp LocalSystem.cpp ConnectivityMatrix.cpp FitFuncs_OW.cpp  Polynomial.cpp
+# BEGIN SECTION CMAKELISTS
+                 
+# END SECTION CMAKELISTS
+)
+
+#SET_SOURCE_FILES_PROPERTIES(poly_1b_A1B6_deg5_v1x.cpp PROPERTIES COMPILE_FLAGS -O0)
+ 
+add_library(fragmented OBJECT ${FRAGMENTED_SOURCES})
+target_include_directories(fragmented PRIVATE ${CMAKE_SOURCE_DIR}) 
+set_property(TARGET fragmented PROPERTY POSITION_INDEPENDENT_CODE TRUE)

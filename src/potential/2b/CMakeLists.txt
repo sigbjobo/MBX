@@ -3,6 +3,7 @@ set(TWOB_SOURCES energy2b.cpp
                  poly-2b-v6x-nogrd.cpp 
                  poly-2b-v6x.cpp 
 # BEGIN SECTION CMAKELISTS
+                 OW_OW.cpp
                  x2b-A1B2Z2_C-v1x.cpp 
                  poly-2b-A1B2Z2_C-v1x.cpp
                  poly-2b-A1B2Z2_C-v1.cpp 

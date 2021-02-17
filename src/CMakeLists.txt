@@ -21,6 +21,7 @@ add_library(mbx SHARED $<TARGET_OBJECTS:bblock>
                          $<TARGET_OBJECTS:2b> 
                          $<TARGET_OBJECTS:3b> 
                          $<TARGET_OBJECTS:dispersion> 
+                         $<TARGET_OBJECTS:fragmented> 
                          $<TARGET_OBJECTS:buckingham> 
                          $<TARGET_OBJECTS:lennardjones> 
                          $<TARGET_OBJECTS:electrostatics> )
@@ -34,7 +35,8 @@ add_library(mbxlib STATIC $<TARGET_OBJECTS:bblock>
                          $<TARGET_OBJECTS:1b> 
                          $<TARGET_OBJECTS:2b> 
                          $<TARGET_OBJECTS:3b> 
-                         $<TARGET_OBJECTS:dispersion> 
+                         $<TARGET_OBJECTS:dispersion>
+                         $<TARGET_OBJECTS:fragmented> 
                          $<TARGET_OBJECTS:buckingham> 
                          $<TARGET_OBJECTS:lennardjones> 
                          $<TARGET_OBJECTS:electrostatics> )

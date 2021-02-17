@@ -102,6 +102,12 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
         // =====>> END SECTION 2B_NO_GRADIENT <<=====
 
+    }
+     else if (mon1 == "ow" and mon2 == "ow") {
+       OW_OW_namespace::OW_OW  pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+        // =====>> END SECTION 2B_NO_GRADIENT <<=====
+
     } else {
         energy = 0.0;
     }
@@ -194,8 +200,16 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "ch4" and mon2 == "h2o") {
         x2b_A1B2Z2_C1D4_deg3_exp0::x2b_A1B2Z2_C1D4_v1x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+
+
         // =====>> END SECTION 2B_GRADIENT <<=====
-    } else {
+    }
+     else if (mon1 == "ow" and mon2 == "ow") {
+        OW_OW_namespace::OW_OW pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    }
+    
+ else {
         energy = 0.0;
     }
 
