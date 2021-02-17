@@ -602,6 +602,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     //    std::vector<size_t> idone;
     std::set<std::pair<size_t, size_t>> donej; //Set with only one unique instance of each element
     for (size_t i = 0; i < iend - istart; i++) {
+      
       // Define the query point
       // for first monomer
       double point[3];
@@ -622,14 +623,15 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
       std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
       std::set<std::pair<size_t, size_t>> donek;
-       
+      
+      std::set<std::tuple<size_t, size_t, size_t>> donel;//
       // Add the pairs that are not in the dimer vector
       for (size_t j = 0; j < nMatches; j++) {
 	std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> retdim;
-
+	
 	
 	if (ret_matches[j].first > i) {
-	  std::set<std::pair<size_t, size_t>> donel;// UNSURE, BEFORE OR AFTER LOOP?
+	  //std::set<std::pair<size_t, size_t>> donel;// UNSURE, BEFORE OR AFTER LOOP?
 	  
 	  // DIMER 
 	  retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
@@ -657,6 +659,9 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
 	    std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
 
+	    std::pair<std::set<std::tuple<size_t, size_t,size_t>>::iterator, bool> ret2;
+
+	    
 	    // Define query point, which is each of the points 'j' inside the
 	    // radius of 'i'
 	    double point2[3];
@@ -677,6 +682,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	    //loop k for neighbors of i
 	    for (size_t k = 0; k < nMatches; k++) {
 	      if (ret_matches[k].first > ret_matches[j].first) {
+		
 		ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
 		if (ret.second) {
 		  // ghost == 0, local == 1
@@ -703,8 +709,9 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 		    //loop including where l are neighbors i
 		    for (size_t l = 0; l < nMatches; l++) {
 		      if (ret_matches[l].first > ret_matches[k].first) {
-			ret = donel.insert(std::make_pair(ret_matches[k].first, ret_matches[l].first));
-			if (ret.second) {
+			//ret = donel.insert(std::make_pair(ret_matches[k].first, ret_matches[l].first));
+			ret2 = donel.insert(std::make_tuple(ret_matches[j].first,ret_matches[k].first, ret_matches[l].first));
+			if (ret2.second) {
 			  // ghost == 0, local == 1
 			  // ghost-ghost-ghost == 0
 			  // ghost-ghost-local == 1 for all permutations
@@ -724,59 +731,59 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 			  }	
 			}
 		      }
-
-		      //loop for l that are neighbors j
-		      for (size_t l = 0; l < nMatches2; l++) {
-			if (ret_matches2[l].first > i) {
-			  // Sort the order of j, k, l, due to ret_matches2
-			  size_t temp;
-			  size_t jel = ret_matches[j].first;
-			  size_t kel = ret_matches[k].first;
-			  size_t lel = ret_matches2[l].first;
-			  if (jel > lel) {
-			    temp = jel;
-			    jel = lel;
-			    lel = temp;
-			  }
-			  if (kel > lel) {
-			    temp = kel;
-			    kel = lel;
-			    lel = temp;
-			  }
-			  if (kel > jel) {
-			    temp = jel;
-			    jel = kel;
-			    kel = temp;
-			  }
-			  ret = donel.insert(std::make_pair(kel,lel));
-			  if (ret.second) {
-			    // ghost == 0, local == 1
-			    // ghost-ghost-ghost == 0
-			    // ghost-ghost-local == 1 for all permutations
-			    // ghost-local-local == 2 for all permutations
-			    // local-local-local == 3
-			    size_t islsum = is_local[mon_index[i]] + is_local[mon_index[jel]] +
-			      is_local[mon_index[kel]] + is_local[mon_index[lel]];
-			    bool include_tetramer = false;
-			    if (use_ghost && (islsum > 0)) include_tetramer = true;
-			    if (!use_ghost && islsum == 4) include_tetramer = true;
-
-			    if (include_tetramer) {
-			      tetramers.push_back(mon_index[i]);
-			      tetramers.push_back(mon_index[jel]);
-			      tetramers.push_back(mon_index[kel]);
-			      tetramers.push_back(mon_index[lel]);
-			    }	
-			  }
+		    }
+		    //loop for l that are neighbors j
+		    for (size_t l = 0; l < nMatches2; l++) {
+		      if (ret_matches2[l].first > i) {
+			// Sort the order of j, k, l, due to ret_matches2
+			size_t temp;
+			size_t jel = ret_matches[j].first;
+			size_t kel = ret_matches[k].first;
+			size_t lel = ret_matches2[l].first;
+			if (jel > lel) {
+			  temp = jel;
+			  jel = lel;
+			  lel = temp;
+			}
+			if (kel > lel) {
+			  temp = kel;
+			  kel = lel;
+			  lel = temp;
+			}
+			if (jel > kel) {
+			  temp = jel;
+			  jel = kel;
+			  kel = temp;
 			}
 		
-		      }// end tetramer loop
-		    }
+			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+			if(ret2.second && lel > kel && kel > jel){
+			  
+			  // ghost == 0, local == 1
+			  // ghost-ghost-ghost == 0
+			  // ghost-ghost-local == 1 for all permutations
+			  // ghost-local-local == 2 for all permutations
+			  // local-local-local == 3
+			  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[jel]] +
+			    is_local[mon_index[kel]] + is_local[mon_index[lel]];
+			  bool include_tetramer = false;
+			  if (use_ghost && (islsum > 0)) include_tetramer = true;
+			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+			  if (include_tetramer) {
+			    tetramers.push_back(mon_index[i]);
+			    tetramers.push_back(mon_index[jel]);
+			    tetramers.push_back(mon_index[kel]);
+			    tetramers.push_back(mon_index[lel]);
+			  }
+			}
+		      }
+		    }// end tetramer loop
 		  }
 		}
 	      }
 	    }// end trimer loop
-
+	  
 		    
 
 	    // Add the trimers that fulfil i > j > k, to avoid double counting
@@ -785,6 +792,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	    // loop where k are neighbors of j
 	    for (size_t k = 0; k < nMatches2; k++) {
 	      if (ret_matches2[k].first > i) { 
+ 		
 		size_t jel = ret_matches[j].first;
 		size_t kel = ret_matches2[k].first;
 		if (ret_matches[j].first > ret_matches2[k].first) {
@@ -812,32 +820,36 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 		  }
 		  // Add tetramers if requested
 		  if (n_max > 3) {
-		   		      
+		    
 		    // loop including where l are neighbors j
-		    for (size_t l = 0; l < nMatches; k++) {
-		      if (ret_matches2[l].first > i) { 
+		    for (size_t l = 0; l < nMatches; l++) {
+		      
+		      if (ret_matches[l].first > i) { 
+		
+
 			// Sort the order of j, k, l, due to ret_matches2
 			size_t temp;
 			size_t jel = ret_matches[j].first;
 			size_t kel = ret_matches2[k].first;
 			size_t lel = ret_matches[l].first;
 			if (jel > lel) {
-			  temp = jel;
-			  jel = lel;
-			  lel = temp;
-			}
-			if (kel > lel) {
-			  temp = kel;
-			  kel = lel;
-			  lel = temp;
-			}
-			if (kel > jel) {
-			  temp = jel;
-			  jel = kel;
-			  kel = temp;
-			}
-			ret = donel.insert(std::make_pair(kel, lel));
-			if (ret.second && lel > kel) {
+			    temp = jel;
+			    jel = lel;
+			    lel = temp;
+			  }
+			  if (kel > lel) {
+			    temp = kel;
+			    kel = lel;
+			    lel = temp;
+			  }
+			  if (jel > kel) {
+			    temp = kel;
+			    kel = jel;
+			    jel = temp;
+			  }
+			
+			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+			if (ret2.second && (lel > kel) && (kel > jel)) {// && order
 			  // ghost == 0, local == 1
 			  // ghost-ghost-ghost == 0
 			  // ghost-ghost-local == 1 for all permutations
@@ -861,8 +873,9 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 		    }
 
 		    // loop including where l are neighbors of j
-		    for (size_t l = 0; l < nMatches2; k++) {
+		    for (size_t l = 0; l < nMatches2; l++) {
 		      if (ret_matches2[l].first > i) { 
+			
 			// Sort the order of j, k, l, due to ret_matches2
 			size_t temp;
 			size_t jel = ret_matches[j].first;
@@ -878,14 +891,14 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 			  kel = lel;
 			  lel = temp;
 			}
-			if (kel > jel) {
-			  temp = jel;
-			  jel = kel;
-			  kel = temp;
+			if (jel > kel) {
+			  temp = kel;
+			  kel = jel;
+			  jel = temp;
 			}
-			
-			ret = donel.insert(std::make_pair(kel, lel));
-			if (ret.second && kel > jel) {
+						
+			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+			if (ret2.second&&(lel > kel)&&(kel > jel)) {// && order
 			  // ghost == 0, local == 1
 			  // ghost-ghost-ghost == 0
 			  // ghost-ghost-local == 1 for all permutations
@@ -904,6 +917,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 			    tetramers.push_back(mon_index[kel]);
 			    tetramers.push_back(mon_index[lel]);
 			  }
+			
 			}
 		      }
 		    }
