@@ -28,8 +28,8 @@ std::vector<double> Polynomial::eval_variables(const std::vector<double>& distan
 
 double Polynomial::eval_switch(const std::vector<double>& distances) const {
     double r = distances[0];
-    double m_ri = 2;
-    double m_ro = 5;
+    double m_ri = 7;
+    double m_ro = 10;
     if (r > m_ro) {
         return 0.0;
     } else if (r > m_ri) {
@@ -186,8 +186,8 @@ std::vector<double> Polynomial::variable_gradient(const std::vector<double>& dis
 std::vector<double> Polynomial::switch_gradient(const std::vector<double>& distances) const {
     std::vector<double> gradients(distances.size());
 
-    double m_ri = 2;
-    double m_ro = 5;
+    double m_ri = 7;
+    double m_ro = 10;
 
     double r = distances[0];
     if (r > m_ro) {
