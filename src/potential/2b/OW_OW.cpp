@@ -30,7 +30,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/2b/OW_OW.h"
 #include "potential/fragmented/FitFuncs.h"
-#define DEBUG 1
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace OW_OW_namespace {

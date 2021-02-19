@@ -103,7 +103,13 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         mbnrg_A1B2_A1B2_A1B2_deg4::mbnrg_A1B2_A1B2_A1B2_deg4_v1 pot(mon1, mon2, mon3);
         energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
         // =====>> END SECTION 3B_NO_GRADIENT <<=====
-    } else {
+    } 
+     else if (mon1 == "ow" and mon2 == "ow" and mon3 == "ow") {
+       OW_OW_OW_namespace::OW_OW_OW  pot(mon1, mon2, mon3);
+        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
+        // =====>> END SECTION 2B_NO_GRADIENT <<=====
+     }
+    else {
         energy = 0.0;
     }
 
@@ -217,7 +223,12 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         mbnrg_A1B2_A1B2_A1B2_deg4::mbnrg_A1B2_A1B2_A1B2_deg4_v1 pot(mon1, mon2, mon3);
         energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
         // =====>> END SECTION 3B_GRADIENT <<=====
-    } else {
+    }
+  else if (mon1 == "ow" and mon2 == "ow" and mon3 == "ow") {
+    OW_OW_OW_namespace::OW_OW_OW pot(mon1, mon2,mon3);
+    energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
+    }
+  else {
         energy = 0.0;
     }
 

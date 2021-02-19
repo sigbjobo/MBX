@@ -27,18 +27,58 @@ std::vector<double> Polynomial::eval_variables(const std::vector<double>& distan
 }
 
 double Polynomial::eval_switch(const std::vector<double>& distances) const {
-    double r = distances[0];
-    double m_ri = 7;
-    double m_ro = 10;
-    if (r > m_ro) {
-        return 0.0;
-    } else if (r > m_ri) {
-        const double t1 = M_PI/(m_ro - m_ri);
-        const double x = (r - m_ri)*t1;
-        return (1.0 + std::cos(x))/2.0;
-    } else {
-        return 1.0;
+  
+  double m_ri, m_ro;
+  if(1 == distances.size())
+    {
+      m_ri = 7;
+      m_ro = 10;
     }
+  else
+    {
+      m_ri = 3.5;
+      m_ro = 5.5;
+    }
+
+  std::vector<double> tcs(distances.size());
+ 
+  for(int i = 0; i < distances.size(); i++) {
+    double r = distances[i];
+  
+    if (r > m_ro) {
+      tcs[i]= 0.0;
+    } else if (r > m_ri) {
+      const double t1 = M_PI/(m_ro - m_ri);
+      const double x = (r - m_ri)*t1;
+      tcs[i]=(1.0 + std::cos(x))/2.0;
+    } else {
+      tcs[i]=1.0;
+    } 
+  }
+
+
+  if(1 == distances.size())
+    {
+      return tcs[0];
+    }
+  else
+    {
+      return tcs[0]*tcs[1]+tcs[0]*tcs[2]+tcs[1]*tcs[2];
+    }
+  
+  // double r = distances[0];
+  
+  //   double m_ri = 7;
+  //   double m_ro = 10;
+  //   if (r > m_ro) {
+  //       return 0.0;
+  //   } else if (r > m_ri) {
+  //       const double t1 = M_PI/(m_ro - m_ri);
+  //       const double x = (r - m_ri)*t1;
+  //       return (1.0 + std::cos(x))/2.0;
+  //   } else {
+  //       return 1.0;
+  //   } 
 }
 
 double Polynomial::eval(const std::vector<double>& distances) const {
@@ -104,7 +144,7 @@ std::vector<double> Polynomial::gradient(const std::vector<double>& coords, std:
 
     //dr/dx
     // 1 / distances
-
+    
     // V
     double energy = this->eval(distances);
 
@@ -184,28 +224,46 @@ std::vector<double> Polynomial::variable_gradient(const std::vector<double>& dis
 }
 
 std::vector<double> Polynomial::switch_gradient(const std::vector<double>& distances) const {
-    std::vector<double> gradients(distances.size());
+  std::vector<double> gradients(distances.size());
+  std::vector<double> tcs(distances.size());
 
-    double m_ri = 7;
-    double m_ro = 10;
-
-    double r = distances[0];
+  double m_ri, m_ro;
+  if(1 == distances.size())
+    {
+      m_ri = 7;
+      m_ro = 10;
+    }
+  else
+    {
+      m_ri = 3.5;
+      m_ro = 5.5;
+    }
+  
+  for(int i = 0; i < distances.size(); i++) {
+    double r = distances[i];
     if (r > m_ro) {
         gradients[0] = 0;
+	tcs[i]= 0.0;
     } else if (r > m_ri) {
         const double t1 = M_PI/(m_ro - m_ri);
         const double x = (r - m_ri)*t1;
         gradients[0] = -M_PI*std::sin(x)/(2.0*(m_ro - m_ri));
+	tcs[i]=(1.0 + std::cos(x))/2.0;
+
     } else {
         gradients[0] = 0;
+	tcs[i]=1.0;
+    }
+  }
+
+  if(3 == distances.size())
+    {
+      gradients[0]=gradients[0]*(tcs[1]+tcs[2]);
+      gradients[1]=gradients[1]*(tcs[0]+tcs[2]);
+      gradients[2]=gradients[2]*(tcs[0]+tcs[1]);
     }
 
-
-    for(int i = 1; i < distances.size(); i++) {
-        gradients[i] = 0;
-    }
-
-    return gradients;
+  return gradients;
 }
 
 void Polynomial::set_nl_params(std::vector<double>& nl_params) {
