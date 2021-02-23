@@ -342,6 +342,12 @@ class System {
     double Get3bCutoff();
 
     /**
+     * Gets the four-body cutoff for polynomials.
+     * @return Four-body cutoff
+     */
+    double Get4bCutoff();
+ 
+    /**
      * Gets the TTM pairs vector.
      * @return Vector of pairs of the monomer pairs for which buckingham will be calculated
      */
@@ -401,6 +407,13 @@ class System {
      */
     size_t GetMaxEval3b();
 
+    /**
+     * Gets the maximum number of trimers per chunk in polynomial evaluation
+     * @return Max chunk size for 4b
+     */
+    size_t GetMaxEval4b();
+
+    
     /**
      * Gets the current dipole tolerance in the system
      * @return Current dipole tolerance
@@ -577,6 +590,21 @@ class System {
     void Set3bIgnorePoly(std::vector<std::vector<std::string> > ignore_3b);
 
     /**
+     * Adds a pair that will be ignored in the 4b polynomials
+     * @param[in] mon1 Is the id of the first monomer
+     * @param[in] mon2 Is the id of the second monomer
+     * @param[in] mon3 Is the id of the third monomer
+     * @param[in] mon4 Is the id of the third monomer
+     */
+    void Add4bIgnorePoly(std::string mon1, std::string mon2, std::string mon3, std::string mon4);
+
+        /**
+     * Sets the whole vector for which the 4b polynomials won't be calculated
+     * @param[in] ignore_4b Vector of string vectors with the trimers to be ignored
+     */
+    void Set4bIgnorePoly(std::vector<std::vector<std::string> > ignore_4b);
+
+    /**
      * Initializes the system once the monomer information is inputed. The
      * system, once created, cannot be modified in terms of monomer composition.
      * To see the default values of the initialization,
@@ -682,6 +710,15 @@ class System {
     void Set3bCutoff(double cutoff3b);
 
     /**
+     * Sets the four-body cutoff for polynomials.
+     * Molecules that are at a larger distance than the cutoff will not
+     * be evaluated
+     * @param[in] cutoff4b Is the distance, in angstrom, of the cutoff
+     */
+    void Set4bCutoff(double cutoff4b);
+
+    
+    /**
      * Sets the maximum number of monomers in the batch of the 1B evaluation
      * @param[in] nmax Is an unsigned int that will set the
      * maximum number of monomers in the batch of the 1B evaluation
@@ -701,6 +738,13 @@ class System {
      * maximum number of trimers in the batch of the 3B evaluation
      */
     void SetNMaxEval3b(size_t nmax);
+
+    /**
+     * Sets the maximum number of trimers in the batch of the 3B evaluation
+     * @param[in] nmax Is an unsigned int that will set the
+     * maximum number of trimers in the batch of the 3B evaluation
+     */
+    void SetNMaxEval4b(size_t nmax);
 
     /**
      * Sets the maximum error per dipole in the iterative methods to
@@ -897,6 +941,19 @@ class System {
      */
     double ThreeBodyEnergy(bool do_grads, bool use_ghost = 0);
 
+
+        /**
+     * Obtains the three-body energy. This is the sum of all the NB
+     * polynomials.
+     * Gradients will be ONLY for the N-body part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return Three-body energy of the system
+     */
+    double NBodyEnergy(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost = 0);
+
     /**
      * Obtains the electrostatic energy. This is the sum of the permanent
      * and induced electrostatics
@@ -1058,6 +1115,20 @@ class System {
      */
     double Get3B(bool do_grads, bool use_ghost = 0);
 
+   
+    /**
+     * Private function to internally get the Nb energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @param[in] N int. Number of bodies body.
+     * @param[in] nmers vector of int. Vector containing N-mers.
+     * @return  N-body energy of the system
+     */
+    double GetNB(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost=0);
+
     /**
      * Private function to internally get the electrostatic energy.
      * Gradients of the system will be updated.
@@ -1165,6 +1236,11 @@ class System {
     size_t maxNTriEval_;
 
     /**
+     * Maximum number of tetramers to be evaluated in the same batch
+     */
+    size_t maxNTetEval_;
+
+    /**
      * Maximum number of iterations allowed in the induced dipole calculation
      */
     size_t maxItDip_;
@@ -1234,6 +1310,14 @@ class System {
      */
     double cutoff3b_;
 
+    /**
+     * Cutoff in the search for clusters for the tetramers.
+     * Molecules which first atoms are at a larger distance than this cutoff
+     * will not be considered a 4b cluster
+     */
+    double cutoff4b_;
+ 
+    
     /**
      * Stores the energy of the system
      */
@@ -1482,6 +1566,13 @@ class System {
      */
     std::vector<std::vector<std::string> > ignore_3b_poly_;
 
+        /**
+     * This vector of vectors contains the trimers of monomer types that will be ignored when
+     * when calculating the 4b polynomials.
+     */
+    std::vector<std::vector<std::string> > ignore_4b_poly_;
+
+    
     /**
      * Vector that contains the relation between the input monomer
      * order and the internal monomer order. The position i of this

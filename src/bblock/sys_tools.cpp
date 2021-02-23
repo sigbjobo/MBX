@@ -403,106 +403,13 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     }
 }
 
-  void GetCloseTetramerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,  size_t nat4,   size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3, std::vector<double> &xyz4) {
-    size_t shift1 = 0;
-    size_t shift2 = 0;
-    size_t shift3 = 0;
-    size_t shift4 = 0;
-    size_t coords1 = 3 * nat1;
-    size_t coords2 = 3 * nat2;
-    size_t coords3 = 3 * nat3;
-    size_t coords4 = 3 * nat4;
+  void GetCloseTetramerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,  size_t nat4,   size_t nt, double *xyz1, double *xyz2, double *xyz3, double *xyz4) {
 
-    for (size_t i = 0; i < nt; i++) {
-        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[3] * xyz1[shift1 + 1] + box_inv[6] * xyz1[shift1 + 2];
-        double y_rec = box_inv[1] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[7] * xyz1[shift1 + 2];
-        double z_rec = box_inv[2] * xyz1[shift1] + box_inv[5] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2];
-
-        double xr0 = box_inv[0] * xyz2[shift2] + box_inv[3] * xyz2[shift2 + 1] + box_inv[6] * xyz2[shift2 + 2];
-        double yr0 = box_inv[1] * xyz2[shift2] + box_inv[4] * xyz2[shift2 + 1] + box_inv[7] * xyz2[shift2 + 2];
-        double zr0 = box_inv[2] * xyz2[shift2] + box_inv[5] * xyz2[shift2 + 1] + box_inv[8] * xyz2[shift2 + 2];
-
-        double dx0 = std::floor(xr0 - x_rec + 0.5);
-        double dy0 = std::floor(yr0 - y_rec + 0.5);
-        double dz0 = std::floor(zr0 - z_rec + 0.5);
-
-        // Move monomer 2 to be the closest image to mon1 if needed
-        for (size_t j = 0; j < nat2; j++) {
-            double xr = box_inv[0] * xyz2[shift2 + 3 * j] + box_inv[3] * xyz2[shift2 + 3 * j + 1] +
-                        box_inv[6] * xyz2[shift2 + 3 * j + 2];
-            double yr = box_inv[1] * xyz2[shift2 + 3 * j] + box_inv[4] * xyz2[shift2 + 3 * j + 1] +
-                        box_inv[7] * xyz2[shift2 + 3 * j + 2];
-            double zr = box_inv[2] * xyz2[shift2 + 3 * j] + box_inv[5] * xyz2[shift2 + 3 * j + 1] +
-                        box_inv[8] * xyz2[shift2 + 3 * j + 2];
-
-            xr -= dx0;
-            yr -= dy0;
-            zr -= dz0;
-
-            xyz2[shift2 + 3 * j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;
-            xyz2[shift2 + 3 * j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;
-            xyz2[shift2 + 3 * j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;
-        }
-
-        // Move monomer 3 to be the closest image to mon1 if needed
-        xr0 = box_inv[0] * xyz3[shift3] + box_inv[3] * xyz3[shift3 + 1] + box_inv[6] * xyz3[shift3 + 2];
-        yr0 = box_inv[1] * xyz3[shift3] + box_inv[4] * xyz3[shift3 + 1] + box_inv[7] * xyz3[shift3 + 2];
-        zr0 = box_inv[2] * xyz3[shift3] + box_inv[5] * xyz3[shift3 + 1] + box_inv[8] * xyz3[shift3 + 2];
-
-        dx0 = std::floor(xr0 - x_rec + 0.5);
-        dy0 = std::floor(yr0 - y_rec + 0.5);
-        dz0 = std::floor(zr0 - z_rec + 0.5);
-
-        for (size_t j = 0; j < nat3; j++) {
-            double xr = box_inv[0] * xyz3[shift3 + 3 * j] + box_inv[3] * xyz3[shift3 + 3 * j + 1] +
-                        box_inv[6] * xyz3[shift3 + 3 * j + 2];
-            double yr = box_inv[1] * xyz3[shift3 + 3 * j] + box_inv[4] * xyz3[shift3 + 3 * j + 1] +
-                        box_inv[7] * xyz3[shift3 + 3 * j + 2];
-            double zr = box_inv[2] * xyz3[shift3 + 3 * j] + box_inv[5] * xyz3[shift3 + 3 * j + 1] +
-                        box_inv[8] * xyz3[shift3 + 3 * j + 2];
-
-            xr -= dx0;
-            yr -= dy0;
-            zr -= dz0;
-
-            xyz3[shift3 + 3 * j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;
-            xyz3[shift3 + 3 * j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;
-            xyz3[shift3 + 3 * j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;
-        }
-
-	// Move monomer 4 to be the closest image to mon1 if needed
-        xr0 = box_inv[0] * xyz4[shift4] + box_inv[3] * xyz4[shift4 + 1] + box_inv[6] * xyz4[shift4 + 2];
-        yr0 = box_inv[1] * xyz4[shift4] + box_inv[4] * xyz4[shift4 + 1] + box_inv[7] * xyz4[shift4 + 2];
-        zr0 = box_inv[2] * xyz4[shift4] + box_inv[5] * xyz4[shift4 + 1] + box_inv[8] * xyz4[shift4 + 2];
-
-        dx0 = std::floor(xr0 - x_rec + 0.5);
-        dy0 = std::floor(yr0 - y_rec + 0.5);
-        dz0 = std::floor(zr0 - z_rec + 0.5);
-
-        for (size_t j = 0; j < nat4; j++) {
-            double xr = box_inv[0] * xyz4[shift4 + 3 * j] + box_inv[3] * xyz4[shift4 + 3 * j + 1] +
-                        box_inv[6] * xyz4[shift4 + 3 * j + 2];
-            double yr = box_inv[1] * xyz4[shift4 + 3 * j] + box_inv[4] * xyz4[shift4 + 3 * j + 1] +
-                        box_inv[7] * xyz4[shift4 + 3 * j + 2];
-            double zr = box_inv[2] * xyz4[shift4 + 3 * j] + box_inv[5] * xyz4[shift4 + 3 * j + 1] +
-                        box_inv[8] * xyz4[shift4 + 3 * j + 2];
-
-            xr -= dx0;
-            yr -= dy0;
-            zr -= dz0;
-
-            xyz4[shift4 + 3 * j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;
-            xyz4[shift4 + 3 * j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;
-            xyz4[shift4 + 3 * j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;
-        }
-
-	
-        shift1 += coords1;
-        shift2 += coords2;
-        shift3 += coords3;
-	shift4 += coords4;
-    }
-}
+    
+    GetCloseDimerImage(box, box_inv, nat1,  nat2,  nt, xyz1,  xyz2);
+    GetCloseDimerImage(box, box_inv, nat1,  nat3,  nt, xyz1,  xyz3);
+    GetCloseDimerImage(box, box_inv, nat1,  nat4,  nt, xyz1,  xyz4);
+  }
 
 
 

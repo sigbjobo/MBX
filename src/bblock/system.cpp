@@ -132,8 +132,8 @@ size_t System::GetFirstInd(size_t n) {
 std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend) {
     // Make sure that nmax is 2 or 3
     // Throw exception otherwise
-    if (nmax != 2 and nmax != 3) {
-        std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2 or 3.";
+    if (nmax != 2 and nmax != 3 and nmax != 4) {
+        std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2, 3 or 4.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
@@ -475,11 +475,14 @@ void System::GetEwaldParamsLennardJones(double &alpha, double &grid_density, siz
 
 void System::Set2bCutoff(double cutoff2b) { cutoff2b_ = cutoff2b; }
 void System::Set3bCutoff(double cutoff3b) { cutoff3b_ = cutoff3b; }
+void System::Set4bCutoff(double cutoff4b) { cutoff4b_ = cutoff4b; }
 double System::Get2bCutoff() { return cutoff2b_; }
 double System::Get3bCutoff() { return cutoff3b_; }
+double System::Get4bCutoff() { return cutoff4b_; }
 void System::SetNMaxEval1b(size_t nmax) { maxNMonEval_ = nmax; }
 void System::SetNMaxEval2b(size_t nmax) { maxNDimEval_ = nmax; }
 void System::SetNMaxEval3b(size_t nmax) { maxNTriEval_ = nmax; }
+void System::SetNMaxEval4b(size_t nmax) { maxNTetEval_ = nmax; }
 
 void System::SetDipoleTol(double tol) { diptol_ = tol; }
 void System::SetDipoleMaxIt(size_t maxit) { maxItDip_ = maxit; }
@@ -699,6 +702,24 @@ void System::Set3bIgnorePoly(std::vector<std::vector<std::string>> ignore_3b) {
         std::vector<std::string> p = ignore_3b[i];
         std::sort(p.begin(), p.end());
         ignore_3b_poly_.push_back(p);
+    }
+}
+void System::Add4bIgnorePoly(std::string mon1, std::string mon2, std::string mon3, std::string mon4) {
+  std::vector<std::string> p = {mon1, mon2, mon3, mon4};
+    std::sort(p.begin(), p.end());
+
+    if (std::find(ignore_4b_poly_.begin(), ignore_4b_poly_.end(), p) == ignore_4b_poly_.end()) {
+        ignore_4b_poly_.push_back(p);
+    }
+}
+
+void System::Set4bIgnorePoly(std::vector<std::vector<std::string>> ignore_4b) {
+    ignore_4b_poly_.clear();
+
+    for (size_t i = 0; i < ignore_4b.size(); i++) {
+        std::vector<std::string> p = ignore_4b[i];
+        std::sort(p.begin(), p.end());
+        ignore_4b_poly_.push_back(p);
     }
 }
 
@@ -966,6 +987,17 @@ void System::SetUpFromJson(nlohmann::json j) {
     cutoff3b_ = cutoff_3b;
     mbx_j_["MBX"]["threebody_cutoff"] = cutoff_3b;
 
+    double cutoff_4b;
+    try {
+        cutoff_4b = j["MBX"]["fourbody_cutoff"];
+    } catch (...) {
+        cutoff_4b = 5.;
+        std::cerr << "**WARNING** \"fourbody_cutoff\" is not defined in json file. Using " << cutoff_4b << "\n";
+    }
+    cutoff4b_ = cutoff_4b;
+    mbx_j_["MBX"]["fourbody_cutoff"] = cutoff_4b;
+
+    
     // Try to get maximum number of evaluations for 1b
     // Default: 1000
     size_t max_eval_1b;
@@ -1002,6 +1034,19 @@ void System::SetUpFromJson(nlohmann::json j) {
     maxNTriEval_ = max_eval_3b;
     mbx_j_["MBX"]["max_n_eval_3b"] = max_eval_3b;
 
+    // Try to get maximum number of evaluations for 3b
+    // Default: 1000
+    size_t max_eval_4b;
+    try {
+        max_eval_4b = j["MBX"]["max_n_eval_4b"];
+    } catch (...) {
+        max_eval_4b = 1000;
+        std::cerr << "**WARNING** \"max_n_eval_4b\" is not defined in json file. Using " << max_eval_4b << "\n";
+    }
+    maxNTetEval_ = max_eval_4b;
+    mbx_j_["MBX"]["max_n_eval_4b"] = max_eval_4b;
+
+    
     // Try to get dipole convergence criteria
     // Default: 1E-16
     double dipole_tolerance;
@@ -1648,7 +1693,7 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
     systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_, dimers, trimers, tetramers, use_ghost_);
     if (nmax == 2) return dimers;
     if (nmax == 3) return trimers;
-    return tetramers;
+    if (nmax == 3) return tetramers;
 }
 
 void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map) {
@@ -1741,8 +1786,14 @@ double System::Energy(bool do_grads) {
     auto t5 = std::chrono::high_resolution_clock::now();
 #endif
 
+    double e4b = GetNB(do_grads,4,tetramers_);
+
+#ifdef TIMING
+    auto t6 = std::chrono::high_resolution_clock::now();
+#endif
+
     // Set up energy with the new value
-    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + elj + Eelec;
+    energy_ = eff + e1b + e2b + e3b + e4b + edisp + ebuck + elj + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;
@@ -1771,8 +1822,10 @@ double System::Energy(bool do_grads) {
               << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t31).count() << " milliseconds\n";
     std::cerr << "System::electrostatics(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() << " milliseconds\n";
+     std::cerr << "System::4b(grad=" << do_grads << ") "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5).count() << " milliseconds\n";
     std::cerr << "TotalEnergy(grad=" << do_grads << ") "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t1).count() << " milliseconds\n";
+	      << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t1).count() << " milliseconds\n";
 #endif
 
     return energy_;
@@ -2534,6 +2587,377 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     return e3b_t;
 }
 
+  ////////
+
+  double System::NBodyEnergy(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text =
+	  std::string("System has not been initialized. ") +std::to_string(N)+ std::string("B Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
+
+    SetPBC(box_);
+    if (N==4)
+      energy_ = GetNB(do_grads, N, nmers, use_ghost);
+    if (N==3)
+      energy_ = Get3B(do_grads, use_ghost);
+    if (N==2)
+      energy_ = Get2B(do_grads, use_ghost);
+
+    return energy_;
+}
+ 
+  double System::GetNB(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost) {
+    // 4B ENERGY
+    double enb_t = 0.0;
+    const double one_N = 1.0 / N;
+
+    // Variables needed for OMP
+    size_t step = 1;
+    int num_threads = 1;
+
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+      // Get the number of threads
+      if (omp_get_thread_num() == 0) num_threads = omp_get_num_threads();
+    }
+    // Define variables to be used later in the condensation of data
+    int grad_step = 3 * numsites_ / num_threads;
+    step = std::max(size_t(1), std::min(nummon_ / num_threads, step));
+#endif  // _OPENMP
+
+    // Variables to be used for both serial and parallel implementation
+    size_t first_grad = 0;
+    size_t last_grad = 3 * numsites_;
+    int rank = 0;
+
+    // Vector pools that allow compatibility between
+    // serial and parallel implementation
+    std::vector<double> enb_pool(num_threads, 0.0);
+    std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
+    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0));  // declare virial pool
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic) private(rank)
+#endif  // _OPENMP
+    for (size_t istart = 0; istart < nummon_; istart += step) {
+#ifdef _OPENMP
+      rank = omp_get_thread_num();
+#endif
+
+      // We loop over all the monomers, and we get all the trimers
+      // in which this monomer is involved
+
+      // In this function, istart and iend refer to the first
+      // monomer of the trimer. The second and third ones will
+      // be found from istart+1 to the total number of monomers
+
+      // This iend definition is making sure that we don't go passed
+      // the number of monomers
+
+      size_t iend = std::min(istart + step, nummon_);
+
+      std::vector<size_t> nmers;
+#ifdef _OPENMP
+      if(N==2)
+	nmers = AddClustersParallel(2, cutoff2b_, istart, iend, use_ghost);
+      if(N==3)
+	nmers = AddClustersParallel(3, cutoff3b_, istart, iend, use_ghost);
+      // if(N==4)
+      // 	std::vector<size_t> nmers = AddClustersParallel(4, cutoff4b_, istart, iend, use_ghost);
+#else
+      if(N==2){
+	AddClusters(2, cutoff2b_, istart, iend, use_ghost);
+	nmers = dimers_;
+      }
+      if(N==3){
+	AddClusters(3, cutoff3b_, istart, iend, use_ghost);
+	nmers = trimers_;
+      }
+      // if(N==4){
+      // 	AddClusters(4, cutoff4b_, istart, iend, use_ghost);
+      // 	std::vector<size_t> nmers = tetramers_;
+      //}
+#endif
+
+      // In order to continue, we need at least one dimer
+      // If the size of the dimer vector is not at least 2, means
+      // that we don't have any dimer
+	
+      if (nmers.size() < N) {
+	continue;
+      }
+	
+      // The way the XYZ are set, they include the virtual site,
+      // but we don't need the electrostatic virtual site for teh 2B
+      // polynomials. Thus, we need to create a pair of vectors with the right
+      // coordinates to pass to polynomials and dispersion
+
+      // std::vector<double> coord1;
+      // if(N>1)
+      //   std::vector<double> coord2;
+      // if(N>2)
+      // std::vector<double> coord3;
+      // if(N>3)
+      //   std::vector<double> coord4;
+
+
+      std::vector<std::string> m_vec;
+      std::vector<std::vector<double>> coord_vec(N);
+      for (int i = 0; i < N; i++){
+	m_vec.push_back(monomers_[nmers[i]]);
+      }
+      size_t _maxNEval;
+      if(N==2){
+	 _maxNEval = (use_ghost) ? 1 : maxNDimEval_;
+      }
+      else if(N==3){
+	_maxNEval = (use_ghost) ? 1 : maxNTriEval_;
+      }
+      // else if(N==4){
+      // 	size_t _maxNEval = (use_ghost) ? 1 : maxNTetEval_;
+      // }
+
+      // Initialize the iteration variables
+      size_t i = 0;
+      size_t nt = 0;
+      size_t nt_tot = 0;
+
+      // if ghost monomers included, then force maxNTriEval == 1 to properly tally energy+virial
+      // should we just overwrite maxNTriEval_?
+        
+
+      // Loop over all the trimers
+      while (N * nt_tot < nmers.size()) {
+	i = (nt_tot + nt) * N;
+
+	bool sameNmer=1;
+	for (int k = 0; k < N; k++)
+	  sameNmer*=(monomers_[nmers[i+k]]==m_vec[k]);
+	    
+	// Check if we are still in the same type of trimer
+	if (sameNmer) {
+	  for (int k = 0; k < N; k++){
+	    for (size_t j = 0; j < 3 * nat_[nmers[i]]; j++) 
+	      coord_vec[k][j]=xyz_[3 * first_index_[nmers[i]] + j];
+	  }
+	  nt++;
+	} 
+			 
+	bool diffMonomer=0;
+	for (int k = 0; k < N; k++)
+	  diffMonomer =diffMonomer || (monomers_[nmers[i+k]]==m_vec[k]);
+	diffMonomer = diffMonomer ||(nt == _maxNEval)||(i == nmers.size() - N);
+	// If one of the monomers is different as the previous one
+	// since trimers are also ordered, means that no more trimers of that
+	// type exist. Thus, do calculation, update m? and clear xyz
+	if (diffMonomer) {
+	  if (nt == 0) {
+
+	    coord_vec.clear();
+	    m_vec.clear();
+	    for (int k = 0; k < N; k++)
+	      m_vec[k]=monomers_[nmers[i+k]];
+	    continue;
+	  }
+
+	  // Fix trimer positions if pbc
+		 
+	  if (use_pbc_) {
+	    if(N==2){
+	      systools::GetCloseDimerImage(box_, box_inverse_, nat_[nmers[nt_tot * N]],
+					   nat_[nmers[nt_tot * N + 1]], nt,
+					   coord_vec[0].data(), coord_vec[1].data());
+	    }
+	    else if(N==3){
+	      systools::GetCloseTrimerImage(box_, box_inverse_, nat_[nmers[nt_tot * N]],
+					    nat_[nmers[nt_tot * N + 1]],nat_[nmers[nt_tot * N + 2]], nt,
+					    coord_vec[0], coord_vec[1], coord_vec[2]);
+	    }  
+	    else{
+	      for (int k = 0; k < N; k++){
+		systools::GetCloseDimerImage(box_, box_inverse_, nat_[nmers[nt_tot * N]],
+					   nat_[nmers[nt_tot * N + k]], nt,
+					   coord_vec[0].data(), coord_vec[k].data());
+	      }
+	    }
+	    
+	    // Check if this pair needs to use MB-nrg
+	    bool use_poly = true;
+	    std::vector<std::string> v1;
+	    std::vector<std::string> v2;
+	    if(N==2){
+	      for (size_t i2b = 0; i2b < ignore_2b_poly_.size(); i2b++) {
+		v1 = ignore_2b_poly_[i2b];
+		v2 = {m_vec[0], m_vec[1]};
+		std::sort(v1.begin(), v1.end());
+		std::sort(v2.begin(), v2.end());
+
+		if (v1 == v2) {
+		  use_poly = false;
+		  break;
+		}
+	      }
+	    }
+	    else if(N==3){
+	      for (size_t i3b = 0; i3b < ignore_3b_poly_.size(); i3b++) {
+		v1 = ignore_3b_poly_[i3b];
+		v2 = {m_vec[0], m_vec[1], m_vec[2]};
+		std::sort(v1.begin(), v1.end());
+		std::sort(v2.begin(), v2.end());
+
+		if (v1 == v2) {
+		  use_poly = false;
+		  break;
+		}
+	      }
+	    }
+	    else if(N==4){
+	      for (size_t i4b = 0; i4b < ignore_4b_poly_.size(); i4b++) {
+		v1 = ignore_4b_poly_[i4b];
+		v2 = {m_vec[0], m_vec[1], m_vec[2], m_vec[3]};
+		std::sort(v1.begin(), v1.end());
+		std::sort(v2.begin(), v2.end());
+
+		if (v1 == v2) {
+		  use_poly = false;
+		  break;
+		}
+	      }
+
+	    }
+
+
+
+	    double escale = 1.0;
+	    if (use_ghost)
+	      {
+		escale = 0.0;
+		for (int k = 0; k < N; k++)
+		  escale += islocal_[nmers[i+k]];
+		escale=escale*one_N;
+	      }
+ 		   
+	    if (use_poly) {
+	      ////CONTINUE
+	      std::vector<std::vector<double>> xyz_vec(N);
+	      for (int k = 0; k < N; k++)
+		std::copy(coord_vec[k].begin(), coord_vec[k].end(), xyz_vec[k].begin());
+
+	      if (do_grads) {
+		// POLYNOMIALS
+		std::vector<std::vector<double>>grad_vec(N);
+		for (int k = 0; k < N; k++)
+		  grad_vec[k] = std::vector<double>(coord_vec[k].size(), 0.0);
+
+			  
+		std::vector<double> virial(9, 0.0);  // declare virial tensor
+		// POLYNOMIALS
+		double e;
+		if(N==2)
+		  e = e2b::get_2b_energy(m_vec[0], m_vec[1], nt, xyz_vec[0], xyz_vec[1],  grad_vec[0], grad_vec[1], &virial);
+		if(N==3)
+		  e = e3b::get_3b_energy(m_vec[0], m_vec[1], m_vec[2], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2], grad_vec[0], grad_vec[1],grad_vec[2], &virial);
+		// if(N==4)
+		//   double e = e4b::get_4b_energy(m_vec[0], m_vec[1], m_vec[2], m_vec[3], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2],xyz_vec[4], grad_vec[0], grad_vec[1],grad_vec[2],grad_vec[3], &virial);
+
+		enb_pool[rank] += escale * e;
+		
+		// Update gradients
+		size_t i0 = nt_tot * N;
+		for (size_t k = 0; k < nt; k++) {
+		  // Monomer 1
+
+		  for (int l = 0; l < N; l++){
+		    for (size_t j = 0; j < 3 * nat_[nmers[i0 + N * k]]; j++) {
+		      grad_pool[rank][3 * first_index_[nmers[i0 + N * k]] + j] +=
+			grad_vec[l][k * 3 * nat_[nmers[i0 + N * k]] + j];
+		    }
+		  }
+		}                        // Virial Tensor
+		for (size_t j = 0; j < 9; j++) {
+		  virial_pool[rank][j] += escale * virial[j];
+		}
+
+	      } else {
+		// POLYNOMIALS
+		double e;
+		if(N==2)
+		  e = e2b::get_2b_energy(m_vec[0], m_vec[1], nt, xyz_vec[0], xyz_vec[1]);
+		if(N==3)
+		  e = e3b::get_3b_energy(m_vec[0], m_vec[1], m_vec[2], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2]);
+		// if(N==4)
+		//   double e = e4b::get_4b_energy(m_vec[0], m_vec[1], m_vec[2], m_vec[3], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2],xyz_vec[4]);
+
+		    
+		enb_pool[rank] += escale * e;
+	      }
+	    }
+
+	    // Update iteration variables
+	    nt_tot += nt;
+	    nt = 0;
+	    coord_vec.clear();
+	      for (int i = 0; i < N; i++){
+		m_vec.push_back(monomers_[nmers[i]]);
+	      }
+	  }
+        }
+      }
+
+#ifdef _OPENMP
+#pragma omp parallel private(first_grad, last_grad, rank)
+      {
+        rank = omp_get_thread_num();
+
+        first_grad = 0 + rank * grad_step;
+
+        last_grad = (rank + 1) * grad_step;
+        if (rank == num_threads - 1) {
+	  last_grad = 3 * numsites_;
+        }
+#pragma omp barrier
+#endif
+
+        // Condensate gradients
+        for (int i = 0; i < num_threads; i++) {
+	  for (size_t j = first_grad; j < last_grad; j++) {
+	    grad_[j] += grad_pool[i][j];
+	  }
+        }
+
+#ifdef _OPENMP
+      }  // parallel
+#endif
+
+      // Condensate energy
+      for (int i = 0; i < num_threads; i++) 
+	  enb_t += enb_pool[i];
+	  
+      // Condensate virial
+      for (int i = 0; i < num_threads; i++) {
+	for (size_t j = 0; j < 9; j++) {
+	  virial_[j] += virial_pool[i][j];
+	}
+      }
+      
+      return enb_t;
+      
+    }
+  }
+
+
+  
+
+
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetCharges() {
