@@ -44,6 +44,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "kdtree/nanoflann.hpp"
 #include "kdtree/kdtree_utils.h"
+//#include "subgraphs/subgraphs.h"
+#include "bblock/subgraphs.h"
+
 #include "tools/definitions.h"
 #include "potential/lj/ljtools.h"
 #include "json/json.h"
@@ -92,6 +95,10 @@ const double gamma2 = gammaM / 2;
  */
 const double gamma21 = gamma2 / gamma1;
 
+  typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                kdtutils::PointCloud<double>, 3 /* dim */>
+       my_kd_tree_t;
+   
 /**
  * @brief Orders the monomers into the internal order, putting
  * equivalent monomers one after the otehr one to maximize efficiency.

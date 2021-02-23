@@ -34,7 +34,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "sys_tools.h"
 
-
 /**
  * @file sys_tools.cpp
  * @brief Contains the implementation of all the functions defined in the header.
@@ -505,139 +504,167 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 }
 
 
-
+  
   bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
+  //
+  void GEN ( int n, int k, int root, int level, int reminder, int m,
+	     	    my_kd_tree_t index, int *Index, int **subgraph, int **childSet,double cutoff);
+  void NEG ( int n, int k, int root, int level, int reminder, int m,
+	     	    my_kd_tree_t index, int *Index, int **subgraph, int **childSet,double cutoff);
+
+void initChildSet(int root, int level, int **subgraph, int **childSet,
+		    kdtutils::PointCloud<double> ptc, my_kd_tree_t index, int nmon2, double cutoff) {
+    register int *N;
+    register int i, j;
+    const int *parents = subgraph[level-1];
+		
+    childSet[level][0] = 0;
+    for(i = 1; i <= parents[0]; i++) {
+
+      
+      std::vector<std::pair<size_t, double>> ret_matches;
+      nanoflann::SearchParams params;
+      const size_t nMatches = index.radiusSearch(ptc[i], cutoff * cutoff, ret_matches, params);
+      N[0]=nMatches;
+      
+      //fix indices
+      for (size_t j = 0; j < nMatches; j++) {
+	size_t pos = ret_matches[j].first / nmon2;
+	N[j+1]=ret_matches[j].first - nmon2 * pos;
+      }
+
+	  
+      for(j = 1; j <= N[0] && root <= N[j]; j++) {
+	if(!Visited[N[j]]) {
+	  Visited[N[j]] = true;
+	  childSet[level][0]++;
+	  childSet[level][childSet[level][0]] = N[j];				
+	}
+      }		
+    }
+  }
   
-// void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-// 		   std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-// 		   std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-// 		   std::vector<size_t> &trimers,std::vector<size_t> &tetramers, bool use_ghost) {
-//     // istart is the monomer position for which we will look all dimers and
-//     // trimers that contain it. iend is the last monomer position.
-//     // This means, if istart is 0 and iend is 2, we will look for all dimers
-//     // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
+  void Explore(int root, int level, int reminder,
+	       my_kd_tree_t index, int **subgraph, bool *Visited, int **Index, int **childSet,double cutoff) {
 
-//     // nmon is the number of monomers in xyz
-//     // xyz_orig is a double vector with positions of all atoms
-//     // first_index is a size_t vector with the first index of the site 'i'
-//     // in in the monomer vector
-//     // is_local is local/ghost descriptor for monomers; interactions involving
-//     //  all ghost monomers are ignored
-//     // use_ghost controls whether or not to include ghost monomers in clusters; default is no.
-//     // dimers and trimers will be filled with the dimers and trimers found
-
-//     // if use_ghost == true,
-//     //       include local+ghost monomers in xyz, but only include local-ghost interactions
-//     // if use_ghost == false,
-//     //       include only local monomers in xyz and do nothing special
-
-//     // Perform a radial search within the cutoff
-//     dimers.clear();
-//     if (n_max > 2) trimers.clear();
-
-//     if (n_max > 3) tetramers.clear();
+    register int i, j, k; // k is the number of selected nodes in the current level.
 
 
-//     // if first monomer is ghost and we're not computing local-ghost interactions, then skip
+    if (reminder == 0) { //reminder == 0 assures level <= subgraphSize
+      subgraphCounter++;
+		
 
-//     if (!use_ghost && !is_local[istart]) return;
-
-//     // Obtain xyz vector with the positions of first atom of each monomer
-//     std::vector<double> xyz;
-//     size_t nmon2 = 0;
-
-//     std::vector<size_t> mon_index;
-//     for (size_t i = istart; i < nmon; i++) {
-//       size_t islsum = is_local[istart] + is_local[i];
-
-//       bool include_monomer = false;
-//       if (n_max == 2) {
-// 	if (i == istart) {
-// 	  if (use_ghost)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	} else {
-// 	  if (use_ghost && islsum == 1)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	}
-//       } else {  // trimer
-// 	if (i == istart) {
-// 	  if (use_ghost)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	} else {
-// 	  if (use_ghost)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	}
-//       }
-
-//       if (include_monomer) {
-// 	xyz.push_back(xyz_orig[3 * first_index[i]]);
-// 	xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
-// 	xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
-// 	mon_index.push_back(i); //First index of atom in monomer
-// 	nmon2++; //Number of monomers included
-//       }
-//     }
-
-//     if (nmon2 < 2) return;
-//     if (n_max > 2 && nmon2 < 3) return;
-
-
-//     // Obtain the data in the structure needed by the kd-tree
-//     kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
-
-//     // Build the tree
-//     // typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-//     //                      kdtutils::PointCloud<double>, 3 /* dim */>
-//   //  my_kd_tree_t;
-//     my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-//     index.buildIndex();
-
-//     int **subgraph;
-//     int subgraphSize = -1, num_random_graphs = 0;
-
-//     bool *Visited;
-
-//     // This array collects the valid children at each layer.
-//    int **childSet;
-    
-//     // This array maps the childSet to the subgraph[level]
-//    int **Index;  
-    
-//     //total number of enumeraed subgraphs.
-//     long long subgraphCounter; 
-
-    
-//     subgraph = new int*[n_max];
-//     for (int i = 0; i < n_max; i++)
-//       subgraph[i] = new int[n_max+1];
-    
-    
-//     Enumerate(subgraph, subgraphSize, Visited,  nmon, Index, childSet, index,cutoff);
-    
-
-//     // for(i = 1; i < subgraphSize; i++) {
-//     //   for(j = 1; i < n_max; i++) {
+      //      g->Classify(subgraph, level);
+		
+      return;
+    }
 	
-//     // 	std::cout<<subgraph
-//     //   }
-//     // }
+ 	
+    initChildSet(root, level, subgraph, childSet, 
+		 ptc, index,  nmon2,  cutoff); 
+	
+    for(k = 1; k <= reminder; k++) {
+      if( childSet[level][0] < k ) { //There is not enough child to choose m from.
+	for(i = 1; i <= childSet[level][0]; i++) {
+	  Visited[childSet[level][i]] = false;
+	}
+	return;
+      }
 
-//   //
+      subgraph[level][0] = k;
+      for(i = 1; i <= k; i++) {
+	subgraph[level][i] = childSet[level][i];
+	Index[level][i] = i;
+      }	
+		
+      Explore(root, level + 1, reminder - k,
+	      index, subgraph, Visited, Index, childSet,cutoff);
+      
+      GEN( childSet[level][0], k, root, level, reminder, k,
+	   index, Index, subgraph, childSet, Visited); 	
+	
+	
+    }
+	
+    for(i = 1; i <= childSet[level][0]; i++) {
+      Visited[childSet[level][i]] = false;
+    }
+    subgraph[level][0] = 0;
+    return;
+  }
+
+  void swap(int i, int j, int root, int level, int reminder, int m,
+	    my_kd_tree_t index, int *Index, int **subgraph, int **childSet,bool *Visited,double cutoff) {
+
+    Index[level][i] = Index[level][j];
+    subgraph[level][Index[level][i]] = childSet[level][i];	
+    Explore(root, level + 1, reminder - m,
+	    index, subgraph, Visited, Index, childSet,cutoff);
+  }
+
+
+  void GEN( int n, int k, int root, int level, int reminder, int m,
+	    my_kd_tree_t index, int *Index, int **subgraph, int **childSet,bool *Visited,double cutoff ) {	
+    if (k > 0 && k < n) {
+      GEN( n-1, k, root, level, reminder, m,
+	   index,Index, subgraph, childSet,Visited,cutoff);
+      if (k == 1) 
+	swap( n, n-1, root, level, reminder, m,
+	      index, Index, subgraph, childSet,Visited,cutoff);  
+      else 
+	swap( n, k-1, root, level, reminder, m,
+	      index, Index, subgraph, childSet,Visited,cutoff);
+    
+      NEG( n-1, k-1, root, level, reminder, m,
+	   index, Index, subgraph, childSet,Visited,cutoff);
+    }
+  }
+
+  void NEG( int n, int k, int root, int level, int reminder, int m,
+	    my_kd_tree_t index, int *Index, int **subgraph, int **childSet,bool *Visited) {	
+    if (k > 0 && k < n) {
+      GEN( n-1, k-1, root, level, reminder, m,
+	   index, Index, subgraph, childset,Visited,cutoff);
+    	
+      if (k == 1) 
+	swap( n-1, n, root, level, reminder, m,
+	      index, Index, subgraph, childset,Visited ,cutoff);  
+      else 
+	swap( k-1, n, root, level, reminder, m,
+	      index, Index, subgraph, childset,Visited,cutoff);
+    
+      NEG( n-1, k, root, level, reminder, m,
+	   index, Index, subgraph, childset, Visited, cutoff);
+    }
+	
+  }
+
+  
+
+  void Enumerate( int **subgraph, int subgraphSize,
+		  bool *Visited, int nmon, int **Index, int **childSet, my_kd_tree_t index,double cutoff) {
+    register int v;
+
+    for (v = 1; v <=  nmon; v++)
+      {
+	subgraph[0][0] = 1;
+	subgraph[0][1] = v;
+		
+	Visited[v] = true;
+	Explore(v, 1, subgraphSize - 1,
+	        index, subgraph, Visited, Index, childSet,cutoff);
+
+	Visited[v] = false;
+      }	
+  }
 
 
   
-  void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-  		   std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,   		   std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-  		   std::vector<size_t> &trimers,std::vector<size_t> &tetramers, bool use_ghost) {
+void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
+		   std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
+		   std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
+		   std::vector<size_t> &trimers,std::vector<size_t> &tetramers, bool use_ghost) {
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -678,483 +705,510 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
       bool include_monomer = false;
       if (n_max == 2) {
-  	if (i == istart) {
-  	  if (use_ghost)
-  	    include_monomer = true;
-  	  else if (!use_ghost && islsum == 2)
-  	    include_monomer = true;
-  	} else {
-  	  if (use_ghost && islsum == 1)
-  	    include_monomer = true;
-  	  else if (!use_ghost && islsum == 2)
-  	    include_monomer = true;
-  	}
+	if (i == istart) {
+	  if (use_ghost)
+	    include_monomer = true;
+	  else if (!use_ghost && islsum == 2)
+	    include_monomer = true;
+	} else {
+	  if (use_ghost && islsum == 1)
+	    include_monomer = true;
+	  else if (!use_ghost && islsum == 2)
+	    include_monomer = true;
+	}
       } else {  // trimer
-  	if (i == istart) {
-  	  if (use_ghost)
-  	    include_monomer = true;
-  	  else if (!use_ghost && islsum == 2)
-  	    include_monomer = true;
-  	} else {
-  	  if (use_ghost)
-  	    include_monomer = true;
-  	  else if (!use_ghost && islsum == 2)
-  	    include_monomer = true;
-  	}
+	if (i == istart) {
+	  if (use_ghost)
+	    include_monomer = true;
+	  else if (!use_ghost && islsum == 2)
+	    include_monomer = true;
+	} else {
+	  if (use_ghost)
+	    include_monomer = true;
+	  else if (!use_ghost && islsum == 2)
+	    include_monomer = true;
+	}
       }
 
       if (include_monomer) {
-  	xyz.push_back(xyz_orig[3 * first_index[i]]);
-  	xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
-  	xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
-  	mon_index.push_back(i); //First index of atom in monomer
-  	nmon2++; //Number of monomers included
+	xyz.push_back(xyz_orig[3 * first_index[i]]);
+	xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
+	xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
+	mon_index.push_back(i); //First index of atom in monomer
+	nmon2++; //Number of monomers included
       }
     }
 
     if (nmon2 < 2) return;
     if (n_max > 2 && nmon2 < 3) return;
 
- 
+
     // Obtain the data in the structure needed by the kd-tree
     kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
 
     // Build the tree
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                kdtutils::PointCloud<double>, 3 /* dim */>
-      my_kd_tree_t;
+    // typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+    //                      kdtutils::PointCloud<double>, 3 /* dim */>
+  //  my_kd_tree_t;
     my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
     index.buildIndex();
 
-    int** neighborList;
-    neighborList = new int*[nmon2];
+    int **subgraph;
+    int subgraphSize = -1, num_random_graphs = 0;
 
-    //for(int i = 0; i < iend - istart; i++){
-    for(int i = 0; i < nmon2; i++){ 
-      double point[3];
-      point[0] = ptc.pts[i].x;
-      point[1] = ptc.pts[i].y;
-      point[2] = ptc.pts[i].z;
-	 
-      // Perform the search
-      std::vector<std::pair<size_t, double>> ret_matches;
-      nanoflann::SearchParams params;
-      const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
-      for (size_t j = 0; j < nMatches; j++) {
-	size_t pos = ret_matches[j].first / nmon2;
-	ret_matches[j].first -= nmon2 * pos;
-      }
+    bool *Visited;
 
-      std::sort(ret_matches.rbegin(), ret_matches.rend(), ComparePair);
-      
-      neighborList[i] = new int[nMatches];
-      neighborList[i][0]=nMatches-1;
-
-      size_t l=0;
-      for (size_t j = 0; j < nMatches; j++) {
-	if (ret_matches[j].first != i){
-	  neighborList[i][l+1]   =  ret_matches[j].first+1;
-	  l++;
-	}
-      }
-    }
-  
-    //#define Debug 1
-#ifdef Debug
-    std::cout<<iend-istart<<" "<<nmon<<" "<<nmon2<<std::endl;
-    for(int i = 0; i < nmon2; i++) 
-      {
-	std::cout<<i+1<<", has "<<neighborList[i][0]<<" neighbors: ";
-	for (size_t j = 0; j < neighborList[i][0]; j++) 
-	  std::cout<<neighborList[i][j+1]<<' ';
-	std::cout<<std::endl;
-      }
-#endif
- 
+    // This array collects the valid children at each layer.
+   int **childSet;
     
-    for (int n_max_i = 2; n_max_i <  n_max+1; n_max_i++){
-      // std::cout << n_max_i << "-body, number of vert "<< nmon2 <<endl;
-      SubGraphs B(nmon2, n_max_i, neighborList, iend-istart+1);
-      B.Enumerate();
-      std::vector<std::vector<int>> subgraphs = B.GetSubgraphs();
-      //B.SubGraphs::~SubGraphs();
-
-#ifdef Debug
-     
-      std::cout<<"Number of subgraphs with size "<< n_max_i<<": "<<subgraphs.size()<<endl;
-      for(int i = 0; i <  subgraphs.size(); i++){
-	for(int j = 0; j <  n_max_i; j++)
-	  std::cout<<subgraphs[i][j]<<" ";
-	std::cout<<endl;
-      }
-#endif
-      
-      for(int i = 0; i <  subgraphs.size(); i++){
-	size_t islsum=0;
-	for(int j = 0; j <  n_max_i; j++)
-	  islsum += is_local[mon_index[subgraphs[i][j]-1]];
-	
-	if ((!use_ghost && islsum == n_max_i)||(use_ghost && islsum > 0) )
-	  { 
-	    if(n_max_i==2)
-	      {
-		dimers.push_back(mon_index[subgraphs[i][0]-1]);
-		dimers.push_back(mon_index[subgraphs[i][1]-1]);
-	      }
-	    else if(n_max_i==3)
-	      {
-		trimers.push_back(mon_index[subgraphs[i][0]-1]);
-		trimers.push_back(mon_index[subgraphs[i][1]-1]);
-		trimers.push_back(mon_index[subgraphs[i][2]-1]);
-	      }
-	    else if(n_max_i==4)
-	      {
-		tetramers.push_back(mon_index[subgraphs[i][0]-1]);
-		tetramers.push_back(mon_index[subgraphs[i][1]-1]);
-		tetramers.push_back(mon_index[subgraphs[i][2]-1]);
-		tetramers.push_back(mon_index[subgraphs[i][3]-1]); 
-	      }
-	  }
-      }
-    }
-    //size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
-    // is_local[mon_index[ret_matches[k].first]] + is_local[mon_index[ret_matches[l].first]];
+    // This array maps the childSet to the subgraph[level]
+   int **Index;  
     
-      
-      
+    //total number of enumeraed subgraphs.
+    long long subgraphCounter; 
 
     
-    // //    std::vector<size_t> idone;
-    // std::set<std::pair<size_t, size_t>> donej; //Set with only one unique instance of each element
-    // for (size_t i = 0; i < iend - istart; i++) {
-       
-    //   // Define the query point
-    //   // for first monomer
-    //   double point[3];
-    //   point[0] = ptc.pts[i].x;
-    //   point[1] = ptc.pts[i].y;
-    //   point[2] = ptc.pts[i].z;
+    subgraph = new int*[n_max];
+    for (int i = 0; i < n_max; i++)
+      subgraph[i] = new int[n_max+1];
+    
+    
+    Enumerate(subgraph, subgraphSize, Visited,  nmon, Index, childSet, index,cutoff);
+    
 
-    //   // Perform the search
-    //   std::vector<std::pair<size_t, double>> ret_matches;
-    //   nanoflann::SearchParams params;
-    //   const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
-      
-    //   //fix indices
-    //   for (size_t j = 0; j < nMatches; j++) {
-    // 	size_t pos = ret_matches[j].first / nmon2;
-    // 	ret_matches[j].first -= nmon2 * pos;
-    //   }
-
-    //   std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
-    //   std::set<std::pair<size_t, size_t>> donek;
-      
-    //   std::set<std::tuple<size_t, size_t, size_t>> donel;//
-    //   // Add the pairs that are not in the dimer vector
-    //   for (size_t j = 0; j < nMatches; j++) {
-    // 	std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> retdim;
+    // for(i = 1; i < subgraphSize; i++) {
+    //   for(j = 1; i < n_max; i++) {
 	
-	
-    // 	if (ret_matches[j].first > i) {
-    // 	  //std::set<std::pair<size_t, size_t>> donel;// UNSURE, BEFORE OR AFTER LOOP?
-	  
-    // 	  // DIMER  
-    // 	  retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
-    // 	  if (retdim.second) {
-    // 	    // ghost == 0, local == 1
-    // 	    // ghost-ghost == 0
-    // 	    // ghost-local == 1 for all permutations
-    // 	    // local-local == 2
-
-    // 	    size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
-
-    // 	    bool include_dimer = false;
-    // 	    if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
-    // 	    if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
-
-    // 	    if (include_dimer) {
-    // 	      dimers.push_back(mon_index[i]);
-    // 	      dimers.push_back(mon_index[ret_matches[j].first]);
-    // 	    }
-    // 	  }// DIMER FINISHED
-
-    // 	  // Add trimers if requested
-    // 	  if (n_max > 2) { 
-	    
-
-    // 	    std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
-
-    // 	    std::pair<std::set<std::tuple<size_t, size_t,size_t>>::iterator, bool> ret2;
-
-	    
-    // 	    // Define query point, which is each of the points 'j' inside the
-    // 	    // radius of 'i'
-    // 	    double point2[3]; 
-    // 	    point2[0] = ptc.pts[ret_matches[j].first].x;
-    // 	    point2[1] = ptc.pts[ret_matches[j].first].y;
-    // 	    point2[2] = ptc.pts[ret_matches[j].first].z;
-    // 	    std::vector<std::pair<size_t, double>> ret_matches2;
-    // 	    nanoflann::SearchParams params2;
-    // 	    const size_t nMatches2 = index.radiusSearch(point2, cutoff * cutoff, ret_matches2, params2);
-
-    // 	    for (size_t k = 0; k < nMatches2; k++) {
-    // 	      size_t pos2 = ret_matches2[k].first / nmon2;
-    // 	      ret_matches2[k].first -= nmon2 * pos2;
-    // 	    }
-	      
-    // 	    std::sort(ret_matches2.begin(), ret_matches2.end(), ComparePair);
-
-    // 	    //loop k for neighbors of i
-    // 	    for (size_t k = 0; k < nMatches; k++) {
-    // 	      if (ret_matches[k].first > ret_matches[j].first) {
-		
-    // 		ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
-    // 		if (ret.second) {
-    // 		  // ghost == 0, local == 1
-    // 		  // ghost-ghost-ghost == 0
-    // 		  // ghost-ghost-local == 1 for all permutations
-    // 		  // ghost-local-local == 2 for all permutations
-    // 		  // local-local-local == 3
-    // 		  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
-    // 		    is_local[mon_index[ret_matches[k].first]];
-
-    // 		  bool include_trimer = false;
-    // 		  if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-    // 		  if (!use_ghost && islsum == 3) include_trimer = true;
-
-    // 		  if (include_trimer) {
-    // 		    trimers.push_back(mon_index[i]);
-    // 		    trimers.push_back(mon_index[ret_matches[j].first]);
-    // 		    trimers.push_back(mon_index[ret_matches[k].first]);
-    // 		  }
-
-    // 		  // Add tetramers if requested
-    // 		  if (n_max > 3) {
-		    
-    // 		    //loop including where l are neighbors i
-    // 		    for (size_t l = 0; l < nMatches; l++) {
-    // 		      if (ret_matches[l].first > ret_matches[k].first) {
-    // 			//ret = donel.insert(std::make_pair(ret_matches[k].first, ret_matches[l].first));
-    // 			ret2 = donel.insert(std::make_tuple(ret_matches[j].first,ret_matches[k].first, ret_matches[l].first));
-    // 			if (ret2.second) {
-    // 			  // ghost == 0, local == 1
-    // 			  // ghost-ghost-ghost == 0
-    // 			  // ghost-ghost-local == 1 for all permutations
-    // 			  // ghost-local-local == 2 for all permutations
-    // 			  // local-local-local == 3
-    // 			  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
-    // 			    is_local[mon_index[ret_matches[k].first]] + is_local[mon_index[ret_matches[l].first]];
-    // 			  bool include_tetramer = false;
-    // 			  if (use_ghost && (islsum > 0)) include_tetramer = true;
-    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
-
-    // 			  if (include_tetramer) {
-    // 			    tetramers.push_back(mon_index[i]);
-    // 			    tetramers.push_back(mon_index[ret_matches[j].first]);
-    // 			    tetramers.push_back(mon_index[ret_matches[k].first]);
-    // 			    tetramers.push_back(mon_index[ret_matches[l].first]);
-    // 			  }	
-    // 			}
-    // 		      }
-    // 		    }
-    // 		    //loop for l that are neighbors j
-    // 		    for (size_t l = 0; l < nMatches2; l++) {
-    // 		      if (ret_matches2[l].first > i) {
-    // 			// Sort the order of j, k, l, due to ret_matches2
-    // 			size_t temp;
-    // 			size_t jel = ret_matches[j].first;
-    // 			size_t kel = ret_matches[k].first;
-    // 			size_t lel = ret_matches2[l].first;
-    // 			if (jel > lel) {
-    // 			  temp = jel;
-    // 			  jel = lel;
-    // 			  lel = temp;
-    // 			}
-    // 			if (kel > lel) {
-    // 			  temp = kel;
-    // 			  kel = lel;
-    // 			  lel = temp;
-    // 			}
-    // 			if (jel > kel) {
-    // 			  temp = jel;
-    // 			  jel = kel;
-    // 			  kel = temp;
-    // 			}
-		
-    // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
-    // 			if(ret2.second && lel > kel && kel > jel){
-			  
-    // 			  // ghost == 0, local == 1
-    // 			  // ghost-ghost-ghost == 0
-    // 			  // ghost-ghost-local == 1 for all permutations
-    // 			  // ghost-local-local == 2 for all permutations
-    // 			  // local-local-local == 3
-    // 			  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[jel]] +
-    // 			    is_local[mon_index[kel]] + is_local[mon_index[lel]];
-    // 			  bool include_tetramer = false;
-    // 			  if (use_ghost && (islsum > 0)) include_tetramer = true;
-    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
-
-    // 			  if (include_tetramer) {
-    // 			    tetramers.push_back(mon_index[i]);
-    // 			    tetramers.push_back(mon_index[jel]);
-    // 			    tetramers.push_back(mon_index[kel]);
-    // 			    tetramers.push_back(mon_index[lel]);
-    // 			  }
-    // 			}
-    // 		      }
-    // 		    }// end tetramer loop
-    // 		  }
-    // 		}
-    // 	      }
-    // 	    }// end trimer loop
-	  
-		    
-
-    // 	    // Add the trimers that fulfil i > j > k, to avoid double counting
-    // 	    // We will add all trimers that fulfill the condition:
-    // 	    // At least 2 of the three distances must be smaller than the cutoff
-    // 	    // loop where k are neighbors of j
-    // 	    for (size_t k = 0; k < nMatches2; k++) {
-    // 	      if (ret_matches2[k].first > i) { 
- 		
-    // 		size_t jel = ret_matches[j].first;
-    // 		size_t kel = ret_matches2[k].first;
-    // 		if (ret_matches[j].first > ret_matches2[k].first) {
-    // 		  jel = ret_matches2[k].first; 
-    // 		  kel = ret_matches[j].first;  
-    // 		}
-    // 		ret = donek.insert(std::make_pair(jel, kel));
-    // 		if (ret.second && kel > jel) {
-    // 		  // ghost == 0, local == 1
-    // 		  // ghost-ghost-ghost == 0
-    // 		  // ghost-ghost-local == 1 for all permutations
-    // 		  // ghost-local-local == 2 for all permutations
-    // 		  // local-local-local == 3
-    // 		  size_t islsum =
-    // 		    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
-
-    // 		  bool include_trimer = false;
-    // 		  if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-    // 		  if (!use_ghost && islsum == 3) include_trimer = true;
-
-    // 		  if (include_trimer) {
-    // 		    trimers.push_back(mon_index[i]);
-    // 		    trimers.push_back(mon_index[jel]);
-    // 		    trimers.push_back(mon_index[kel]);
-    // 		  }
-    // 		  // Add tetramers if requested
-    // 		  if (n_max > 3) {
-		    
-    // 		    // loop including where l are neighbors j
-    // 		    for (size_t l = 0; l < nMatches; l++) {
-		      
-    // 		      if (ret_matches[l].first > i) { 
-		
-
-    // 			// Sort the order of j, k, l, due to ret_matches2
-    // 			size_t temp;
-    // 			size_t jel = ret_matches[j].first;
-    // 			size_t kel = ret_matches2[k].first;
-    // 			size_t lel = ret_matches[l].first;
-    // 			if (jel > lel) {
-    // 			    temp = jel;
-    // 			    jel = lel;
-    // 			    lel = temp;
-    // 			  }
-    // 			  if (kel > lel) {
-    // 			    temp = kel;
-    // 			    kel = lel;
-    // 			    lel = temp;
-    // 			  }
-    // 			  if (jel > kel) {
-    // 			    temp = kel;
-    // 			    kel = jel;
-    // 			    jel = temp;
-    // 			  }
-			
-    // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
-    // 			if (ret2.second && (lel > kel) && (kel > jel)) {// && order
-    // 			  // ghost == 0, local == 1
-    // 			  // ghost-ghost-ghost == 0
-    // 			  // ghost-ghost-local == 1 for all permutations
-    // 			  // ghost-local-local == 2 for all permutations
-    // 			  // local-local-local == 3
-    // 			  size_t islsum =
-    // 			    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]] + is_local[mon_index[lel]];
-
-    // 			  bool include_tetramer = false;
-    // 			  if (use_ghost && (islsum >0 )) include_tetramer = true;
-    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
-
-    // 			  if (include_tetramer) {
-    // 			    tetramers.push_back(mon_index[i]);
-    // 			    tetramers.push_back(mon_index[jel]);
-    // 			    tetramers.push_back(mon_index[kel]);
-    // 			    tetramers.push_back(mon_index[lel]);
-    // 			  }
-    // 			}
-    // 		      }
-    // 		    }
-
-    // 		    // loop including where l are neighbors of j
-    // 		    for (size_t l = 0; l < nMatches2; l++) {
-    // 		      if (ret_matches2[l].first > i) { 
-			
-    // 			// Sort the order of j, k, l, due to ret_matches2
-    // 			size_t temp;
-    // 			size_t jel = ret_matches[j].first;
-    // 			size_t kel = ret_matches2[k].first;
-    // 			size_t lel = ret_matches2[l].first;
-    // 			if (jel > lel) {
-    // 			  temp = jel;
-    // 			  jel = lel;
-    // 			  lel = temp;
-    // 			}
-    // 			if (kel > lel) {
-    // 			  temp = kel;
-    // 			  kel = lel;
-    // 			  lel = temp;
-    // 			}
-    // 			if (jel > kel) {
-    // 			  temp = kel;
-    // 			  kel = jel;
-    // 			  jel = temp;
-    // 			}
-						
-    // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
-    // 			if (ret2.second&&(lel > kel)&&(kel > jel)) {// && order
-    // 			  // ghost == 0, local == 1
-    // 			  // ghost-ghost-ghost == 0
-    // 			  // ghost-ghost-local == 1 for all permutations
-    // 			  // ghost-local-local == 2 for all permutations
-    // 			  // local-local-local == 3
-    // 			  size_t islsum =
-    // 			    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]] + is_local[mon_index[lel]];
-
-    // 			  bool include_tetramer = false;
-    // 			  if (use_ghost && (islsum >0 )) include_tetramer = true;
-    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
-
-    // 			  if (include_tetramer) {
-    // 			    tetramers.push_back(mon_index[i]);
-    // 			    tetramers.push_back(mon_index[jel]);
-    // 			    tetramers.push_back(mon_index[kel]);
-    // 			    tetramers.push_back(mon_index[lel]);
-    // 			  }
-			
-    // 			}
-    // 		      }
-    // 		    }
-    // 		  }// end tetramer condition
-    // 		} //end if unique combination of jk
-    // 	      }
-    // 	    }
-    // 	  }
-    // 	}
+    // 	std::cout<<subgraph
     //   }
     // }
-  } // 
+
+  //
+
+
+  
+  // void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
+  // 		   std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,  // 		   std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
+  // 		   std::vector<size_t> &trimers,std::vector<size_t> &tetramers, bool use_ghost) {
+  //   // istart is the monomer position for which we will look all dimers and
+  //   // trimers that contain it. iend is the last monomer position.
+  //   // This means, if istart is 0 and iend is 2, we will look for all dimers
+  //   // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
+
+  //   // nmon is the number of monomers in xyz
+  //   // xyz_orig is a double vector with positions of all atoms
+  //   // first_index is a size_t vector with the first index of the site 'i'
+  //   // in in the monomer vector
+  //   // is_local is local/ghost descriptor for monomers; interactions involving
+  //   //  all ghost monomers are ignored
+  //   // use_ghost controls whether or not to include ghost monomers in clusters; default is no.
+  //   // dimers and trimers will be filled with the dimers and trimers found
+
+  //   // if use_ghost == true,
+  //   //       include local+ghost monomers in xyz, but only include local-ghost interactions
+  //   // if use_ghost == false,
+  //   //       include only local monomers in xyz and do nothing special
+
+  //   // Perform a radial search within the cutoff
+  //   dimers.clear();
+  //   if (n_max > 2) trimers.clear();
+
+  //   if (n_max > 3) tetramers.clear();
+
+
+  //   // if first monomer is ghost and we're not computing local-ghost interactions, then skip
+
+  //   if (!use_ghost && !is_local[istart]) return;
+
+  //   // Obtain xyz vector with the positions of first atom of each monomer
+  //   std::vector<double> xyz;
+  //   size_t nmon2 = 0;
+
+  //   std::vector<size_t> mon_index;
+  //   for (size_t i = istart; i < nmon; i++) {
+  //     size_t islsum = is_local[istart] + is_local[i];
+
+  //     bool include_monomer = false;
+  //     if (n_max == 2) {
+  // 	if (i == istart) {
+  // 	  if (use_ghost)
+  // 	    include_monomer = true;
+  // 	  else if (!use_ghost && islsum == 2)
+  // 	    include_monomer = true;
+  // 	} else {
+  // 	  if (use_ghost && islsum == 1)
+  // 	    include_monomer = true;
+  // 	  else if (!use_ghost && islsum == 2)
+  // 	    include_monomer = true;
+  // 	}
+  //     } else {  // trimer
+  // 	if (i == istart) {
+  // 	  if (use_ghost)
+  // 	    include_monomer = true;
+  // 	  else if (!use_ghost && islsum == 2)
+  // 	    include_monomer = true;
+  // 	} else {
+  // 	  if (use_ghost)
+  // 	    include_monomer = true;
+  // 	  else if (!use_ghost && islsum == 2)
+  // 	    include_monomer = true;
+  // 	}
+  //     }
+
+  //     if (include_monomer) {
+  // 	xyz.push_back(xyz_orig[3 * first_index[i]]);
+  // 	xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
+  // 	xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
+  // 	mon_index.push_back(i); //First index of atom in monomer
+  // 	nmon2++; //Number of monomers included
+  //     }
+  //   }
+
+  //   if (nmon2 < 2) return;
+  //   if (n_max > 2 && nmon2 < 3) return;
+
+
+  //   // Obtain the data in the structure needed by the kd-tree
+  //   kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
+
+  //   // Build the tree
+  //   typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+  //                                               kdtutils::PointCloud<double>, 3 /* dim */>
+  //     my_kd_tree_t;
+  //   my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+  //   index.buildIndex();
+
+  //   //    std::vector<size_t> idone;
+  //   std::set<std::pair<size_t, size_t>> donej; //Set with only one unique instance of each element
+  //   for (size_t i = 0; i < iend - istart; i++) {
+      
+  //     // Define the query point
+  //     // for first monomer
+  //     double point[3];
+  //     point[0] = ptc.pts[i].x;
+  //     point[1] = ptc.pts[i].y;
+  //     point[2] = ptc.pts[i].z;
+
+  //     // Perform the search
+  //     std::vector<std::pair<size_t, double>> ret_matches;
+  //     nanoflann::SearchParams params;
+  //     const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
+      
+  //     //fix indices
+  //     for (size_t j = 0; j < nMatches; j++) {
+  // 	size_t pos = ret_matches[j].first / nmon2;
+  // 	ret_matches[j].first -= nmon2 * pos;
+  //     }
+
+  //     std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
+  //     std::set<std::pair<size_t, size_t>> donek;
+      
+  //     std::set<std::tuple<size_t, size_t, size_t>> donel;//
+  //     // Add the pairs that are not in the dimer vector
+  //     for (size_t j = 0; j < nMatches; j++) {
+  // 	std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> retdim;
+	
+	
+  // 	if (ret_matches[j].first > i) {
+  // 	  //std::set<std::pair<size_t, size_t>> donel;// UNSURE, BEFORE OR AFTER LOOP?
+	  
+  // 	  // DIMER 
+  // 	  retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
+  // 	  if (retdim.second) {
+  // 	    // ghost == 0, local == 1
+  // 	    // ghost-ghost == 0
+  // 	    // ghost-local == 1 for all permutations
+  // 	    // local-local == 2
+
+  // 	    size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
+
+  // 	    bool include_dimer = false;
+  // 	    if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
+  // 	    if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
+
+  // 	    if (include_dimer) {
+  // 	      dimers.push_back(mon_index[i]);
+  // 	      dimers.push_back(mon_index[ret_matches[j].first]);
+  // 	    }
+  // 	  }// DIMER FINISHED
+
+  // 	  // Add trimers if requested
+  // 	  if (n_max > 2) { 
+	    
+
+  // 	    std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
+
+  // 	    std::pair<std::set<std::tuple<size_t, size_t,size_t>>::iterator, bool> ret2;
+
+	    
+  // 	    // Define query point, which is each of the points 'j' inside the
+  // 	    // radius of 'i'
+  // 	    double point2[3]; 
+  // 	    point2[0] = ptc.pts[ret_matches[j].first].x;
+  // 	    point2[1] = ptc.pts[ret_matches[j].first].y;
+  // 	    point2[2] = ptc.pts[ret_matches[j].first].z;
+  // 	    std::vector<std::pair<size_t, double>> ret_matches2;
+  // 	    nanoflann::SearchParams params2;
+  // 	    const size_t nMatches2 = index.radiusSearch(point2, cutoff * cutoff, ret_matches2, params2);
+
+  // 	    for (size_t k = 0; k < nMatches2; k++) {
+  // 	      size_t pos2 = ret_matches2[k].first / nmon2;
+  // 	      ret_matches2[k].first -= nmon2 * pos2;
+  // 	    }
+	      
+  // 	    std::sort(ret_matches2.begin(), ret_matches2.end(), ComparePair);
+
+  // 	    //loop k for neighbors of i
+  // 	    for (size_t k = 0; k < nMatches; k++) {
+  // 	      if (ret_matches[k].first > ret_matches[j].first) {
+		
+  // 		ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
+  // 		if (ret.second) {
+  // 		  // ghost == 0, local == 1
+  // 		  // ghost-ghost-ghost == 0
+  // 		  // ghost-ghost-local == 1 for all permutations
+  // 		  // ghost-local-local == 2 for all permutations
+  // 		  // local-local-local == 3
+  // 		  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
+  // 		    is_local[mon_index[ret_matches[k].first]];
+
+  // 		  bool include_trimer = false;
+  // 		  if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+  // 		  if (!use_ghost && islsum == 3) include_trimer = true;
+
+  // 		  if (include_trimer) {
+  // 		    trimers.push_back(mon_index[i]);
+  // 		    trimers.push_back(mon_index[ret_matches[j].first]);
+  // 		    trimers.push_back(mon_index[ret_matches[k].first]);
+  // 		  }
+
+  // 		  // Add tetramers if requested
+  // 		  if (n_max > 3) {
+		    
+  // 		    //loop including where l are neighbors i
+  // 		    for (size_t l = 0; l < nMatches; l++) {
+  // 		      if (ret_matches[l].first > ret_matches[k].first) {
+  // 			//ret = donel.insert(std::make_pair(ret_matches[k].first, ret_matches[l].first));
+  // 			ret2 = donel.insert(std::make_tuple(ret_matches[j].first,ret_matches[k].first, ret_matches[l].first));
+  // 			if (ret2.second) {
+  // 			  // ghost == 0, local == 1
+  // 			  // ghost-ghost-ghost == 0
+  // 			  // ghost-ghost-local == 1 for all permutations
+  // 			  // ghost-local-local == 2 for all permutations
+  // 			  // local-local-local == 3
+  // 			  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
+  // 			    is_local[mon_index[ret_matches[k].first]] + is_local[mon_index[ret_matches[l].first]];
+  // 			  bool include_tetramer = false;
+  // 			  if (use_ghost && (islsum > 0)) include_tetramer = true;
+  // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+  // 			  if (include_tetramer) {
+  // 			    tetramers.push_back(mon_index[i]);
+  // 			    tetramers.push_back(mon_index[ret_matches[j].first]);
+  // 			    tetramers.push_back(mon_index[ret_matches[k].first]);
+  // 			    tetramers.push_back(mon_index[ret_matches[l].first]);
+  // 			  }	
+  // 			}
+  // 		      }
+  // 		    }
+  // 		    //loop for l that are neighbors j
+  // 		    for (size_t l = 0; l < nMatches2; l++) {
+  // 		      if (ret_matches2[l].first > i) {
+  // 			// Sort the order of j, k, l, due to ret_matches2
+  // 			size_t temp;
+  // 			size_t jel = ret_matches[j].first;
+  // 			size_t kel = ret_matches[k].first;
+  // 			size_t lel = ret_matches2[l].first;
+  // 			if (jel > lel) {
+  // 			  temp = jel;
+  // 			  jel = lel;
+  // 			  lel = temp;
+  // 			}
+  // 			if (kel > lel) {
+  // 			  temp = kel;
+  // 			  kel = lel;
+  // 			  lel = temp;
+  // 			}
+  // 			if (jel > kel) {
+  // 			  temp = jel;
+  // 			  jel = kel;
+  // 			  kel = temp;
+  // 			}
+		
+  // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+  // 			if(ret2.second && lel > kel && kel > jel){
+			  
+  // 			  // ghost == 0, local == 1
+  // 			  // ghost-ghost-ghost == 0
+  // 			  // ghost-ghost-local == 1 for all permutations
+  // 			  // ghost-local-local == 2 for all permutations
+  // 			  // local-local-local == 3
+  // 			  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[jel]] +
+  // 			    is_local[mon_index[kel]] + is_local[mon_index[lel]];
+  // 			  bool include_tetramer = false;
+  // 			  if (use_ghost && (islsum > 0)) include_tetramer = true;
+  // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+  // 			  if (include_tetramer) {
+  // 			    tetramers.push_back(mon_index[i]);
+  // 			    tetramers.push_back(mon_index[jel]);
+  // 			    tetramers.push_back(mon_index[kel]);
+  // 			    tetramers.push_back(mon_index[lel]);
+  // 			  }
+  // 			}
+  // 		      }
+  // 		    }// end tetramer loop
+  // 		  }
+  // 		}
+  // 	      }
+  // 	    }// end trimer loop
+	  
+		    
+
+  // 	    // Add the trimers that fulfil i > j > k, to avoid double counting
+  // 	    // We will add all trimers that fulfill the condition:
+  // 	    // At least 2 of the three distances must be smaller than the cutoff
+  // 	    // loop where k are neighbors of j
+  // 	    for (size_t k = 0; k < nMatches2; k++) {
+  // 	      if (ret_matches2[k].first > i) { 
+ 		
+  // 		size_t jel = ret_matches[j].first;
+  // 		size_t kel = ret_matches2[k].first;
+  // 		if (ret_matches[j].first > ret_matches2[k].first) {
+  // 		  jel = ret_matches2[k].first; 
+  // 		  kel = ret_matches[j].first;  
+  // 		}
+  // 		ret = donek.insert(std::make_pair(jel, kel));
+  // 		if (ret.second && kel > jel) {
+  // 		  // ghost == 0, local == 1
+  // 		  // ghost-ghost-ghost == 0
+  // 		  // ghost-ghost-local == 1 for all permutations
+  // 		  // ghost-local-local == 2 for all permutations
+  // 		  // local-local-local == 3
+  // 		  size_t islsum =
+  // 		    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
+
+  // 		  bool include_trimer = false;
+  // 		  if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+  // 		  if (!use_ghost && islsum == 3) include_trimer = true;
+
+  // 		  if (include_trimer) {
+  // 		    trimers.push_back(mon_index[i]);
+  // 		    trimers.push_back(mon_index[jel]);
+  // 		    trimers.push_back(mon_index[kel]);
+  // 		  }
+  // 		  // Add tetramers if requested
+  // 		  if (n_max > 3) {
+		    
+  // 		    // loop including where l are neighbors j
+  // 		    for (size_t l = 0; l < nMatches; l++) {
+		      
+  // 		      if (ret_matches[l].first > i) { 
+		
+
+  // 			// Sort the order of j, k, l, due to ret_matches2
+  // 			size_t temp;
+  // 			size_t jel = ret_matches[j].first;
+  // 			size_t kel = ret_matches2[k].first;
+  // 			size_t lel = ret_matches[l].first;
+  // 			if (jel > lel) {
+  // 			    temp = jel;
+  // 			    jel = lel;
+  // 			    lel = temp;
+  // 			  }
+  // 			  if (kel > lel) {
+  // 			    temp = kel;
+  // 			    kel = lel;
+  // 			    lel = temp;
+  // 			  }
+  // 			  if (jel > kel) {
+  // 			    temp = kel;
+  // 			    kel = jel;
+  // 			    jel = temp;
+  // 			  }
+			
+  // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+  // 			if (ret2.second && (lel > kel) && (kel > jel)) {// && order
+  // 			  // ghost == 0, local == 1
+  // 			  // ghost-ghost-ghost == 0
+  // 			  // ghost-ghost-local == 1 for all permutations
+  // 			  // ghost-local-local == 2 for all permutations
+  // 			  // local-local-local == 3
+  // 			  size_t islsum =
+  // 			    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]] + is_local[mon_index[lel]];
+
+  // 			  bool include_tetramer = false;
+  // 			  if (use_ghost && (islsum >0 )) include_tetramer = true;
+  // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+  // 			  if (include_tetramer) {
+  // 			    tetramers.push_back(mon_index[i]);
+  // 			    tetramers.push_back(mon_index[jel]);
+  // 			    tetramers.push_back(mon_index[kel]);
+  // 			    tetramers.push_back(mon_index[lel]);
+  // 			  }
+  // 			}
+  // 		      }
+  // 		    }
+
+  // 		    // loop including where l are neighbors of j
+  // 		    for (size_t l = 0; l < nMatches2; l++) {
+  // 		      if (ret_matches2[l].first > i) { 
+			
+  // 			// Sort the order of j, k, l, due to ret_matches2
+  // 			size_t temp;
+  // 			size_t jel = ret_matches[j].first;
+  // 			size_t kel = ret_matches2[k].first;
+  // 			size_t lel = ret_matches2[l].first;
+  // 			if (jel > lel) {
+  // 			  temp = jel;
+  // 			  jel = lel;
+  // 			  lel = temp;
+  // 			}
+  // 			if (kel > lel) {
+  // 			  temp = kel;
+  // 			  kel = lel;
+  // 			  lel = temp;
+  // 			}
+  // 			if (jel > kel) {
+  // 			  temp = kel;
+  // 			  kel = jel;
+  // 			  jel = temp;
+  // 			}
+						
+  // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+  // 			if (ret2.second&&(lel > kel)&&(kel > jel)) {// && order
+  // 			  // ghost == 0, local == 1
+  // 			  // ghost-ghost-ghost == 0
+  // 			  // ghost-ghost-local == 1 for all permutations
+  // 			  // ghost-local-local == 2 for all permutations
+  // 			  // local-local-local == 3
+  // 			  size_t islsum =
+  // 			    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]] + is_local[mon_index[lel]];
+
+  // 			  bool include_tetramer = false;
+  // 			  if (use_ghost && (islsum >0 )) include_tetramer = true;
+  // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+  // 			  if (include_tetramer) {
+  // 			    tetramers.push_back(mon_index[i]);
+  // 			    tetramers.push_back(mon_index[jel]);
+  // 			    tetramers.push_back(mon_index[kel]);
+  // 			    tetramers.push_back(mon_index[lel]);
+  // 			  }
+			
+  // 			}
+  // 		      }
+  // 		    }
+  // 		  }// end tetramer condition
+  // 		} //end if unique combination of jk
+  // 	      }
+  // 	    }
+  // 	  }
+  // 	}
+  //     }
+  //   }
+  // }
  
  
 void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,

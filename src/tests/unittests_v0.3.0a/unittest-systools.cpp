@@ -1020,7 +1020,7 @@ TEST_CASE("systools::AddClusters") {
 		    	    }
 			    
 		    	    if (int(sij<cutoff)+int(sik<cutoff)+int(sim<cutoff)+int(sjk<cutoff)+
-		    		int(sjm<cutoff)+int(skm<cutoff)>3)
+		    		int(sjm<cutoff)+int(skm<cutoff)>=3)
 		    	      {
 		    		expected_number_of_tetramers++;
 		    	      }

@@ -11,8 +11,9 @@ add_subdirectory(potential)
 add_subdirectory(tools)
 add_subdirectory(main)
 
-add_subdirectory(tests)
 
+add_subdirectory(tests)
+ 
 add_library(mbx SHARED $<TARGET_OBJECTS:bblock> 
                          $<TARGET_OBJECTS:io_tools> 
                          $<TARGET_OBJECTS:tools> 
