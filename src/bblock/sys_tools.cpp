@@ -774,7 +774,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     
     for (int n_max_i = 2; n_max_i <  n_max+1; n_max_i++){
       // std::cout << n_max_i << "-body, number of vert "<< nmon2 <<endl;
-      SubGraphs B(nmon2, n_max_i, neighborList, iend-istart+1);
+      SubGraphs B(nmon2, n_max_i, neighborList, iend-istart);
       B.Enumerate();
       std::vector<std::vector<int>> subgraphs = B.GetSubgraphs();
       //B.SubGraphs::~SubGraphs();

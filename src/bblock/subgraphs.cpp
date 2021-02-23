@@ -348,18 +348,20 @@ void SubGraphs::Enumerate() {
 
 	for (v = 1; v <= this->nVert; v++)
 	{
+
+	  if(v>this->nVertStop)
+	    break;
+
 #ifdef Debug
-		printf("+ Exploring Node %d ...\n", v);
+	  printf("+ Exploring Node %d ...\n", v);
 #endif Debug
- 		this->subgraph[0][0] = 1;
-		this->subgraph[0][1] = v;
-		
-		this->Visited[v] = true;
-		//cout<<this->subgraphSize - 1<<endl;
-		Explore(v, 1, this->subgraphSize - 1);
-		this->Visited[v] = false;
-		if(v<this->nVertStop)
-		  break;
+	  this->subgraph[0][0] = 1;
+	  this->subgraph[0][1] = v;
+	  
+	  this->Visited[v] = true;
+	  //cout<<this->subgraphSize - 1<<endl;
+	  Explore(v, 1, this->subgraphSize - 1);
+	  this->Visited[v] = false;
 	}	
 } 
 
