@@ -1,6 +1,7 @@
 add_subdirectory(1b) 
 add_subdirectory(2b) 
 add_subdirectory(3b) 
+add_subdirectory(4b) 
 add_subdirectory(fragmented) 
 add_subdirectory(dispersion) 
 add_subdirectory(buckingham) 

@@ -77,6 +77,9 @@ System::System() {
     // Affects the 3B polynomials
     cutoff3b_ = 5.0;
 
+    cutoff4b_ = 5.0;
+
+    
     ////////////////////////
     // Evaluation batches //
     ////////////////////////
@@ -87,7 +90,10 @@ System::System() {
     maxNDimEval_ = 1024;
     // Maximum number in the batch for the 3B evaluation
     maxNTriEval_ = 1024;
+    // Maximum number in the batch for the 4B evaluation
+    maxNTetEval_ = 1024;
 
+    
     // Setting dipole tolerance to a consrvative value
     // TODO make it be error/dipole, not total error as it is now
     diptol_ = 1E-16;
@@ -275,6 +281,8 @@ size_t System::GetMaxEval1b() { return maxNMonEval_; }
 size_t System::GetMaxEval2b() { return maxNDimEval_; }
 
 size_t System::GetMaxEval3b() { return maxNTriEval_; }
+
+size_t System::GetMaxEval4b() { return maxNTetEval_; }
 
 double System::GetDipoleTolerance() { return diptol_; }
 
@@ -610,6 +618,8 @@ std::vector<std::vector<std::string>> System::Get2bIgnorePoly() { return ignore_
 
 std::vector<std::vector<std::string>> System::Get3bIgnorePoly() { return ignore_3b_poly_; }
 
+std::vector<std::vector<std::string>> System::Get4bIgnorePoly() { return ignore_4b_poly_; }
+  
 void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
     std::pair<std::string, std::string> p = mon2 < mon1 ? std::make_pair(mon2, mon1) : std::make_pair(mon1, mon2);
 
@@ -988,11 +998,11 @@ void System::SetUpFromJson(nlohmann::json j) {
     mbx_j_["MBX"]["threebody_cutoff"] = cutoff_3b;
 
     double cutoff_4b;
-    try {
-        cutoff_4b = j["MBX"]["fourbody_cutoff"];
+    try {                     
+    cutoff_4b = j["MBX"]["fourbody_cutoff"];
     } catch (...) {
-        cutoff_4b = 5.;
-        std::cerr << "**WARNING** \"fourbody_cutoff\" is not defined in json file. Using " << cutoff_4b << "\n";
+       cutoff_4b = 5.;
+       std::cerr << "**WARNING** \"fourbody_cutoff\" is not defined in json file. Using " << cutoff_4b << "\n";
     }
     cutoff4b_ = cutoff_4b;
     mbx_j_["MBX"]["fourbody_cutoff"] = cutoff_4b;
@@ -1038,10 +1048,10 @@ void System::SetUpFromJson(nlohmann::json j) {
     // Default: 1000
     size_t max_eval_4b;
     try {
-        max_eval_4b = j["MBX"]["max_n_eval_4b"];
+      max_eval_4b = j["MBX"]["max_n_eval_4b"];
     } catch (...) {
-        max_eval_4b = 1000;
-        std::cerr << "**WARNING** \"max_n_eval_4b\" is not defined in json file. Using " << max_eval_4b << "\n";
+         max_eval_4b = 1000;
+         std::cerr << "**WARNING** \"max_n_eval_4b\" is not defined in json file. Using " << max_eval_4b << "\n";
     }
     maxNTetEval_ = max_eval_4b;
     mbx_j_["MBX"]["max_n_eval_4b"] = max_eval_4b;
@@ -1358,9 +1368,11 @@ void System::SetUpFromJson(char *json_file) {
                                  {{"box", nlohmann::json::array()},
                                   {"twobody_cutoff", 100.0},
                                   {"threebody_cutoff", 6.5},
+				  {"threebody_cutoff", 4.},
                                   {"max_n_eval_1b", 500},
                                   {"max_n_eval_2b", 500},
                                   {"max_n_eval_3b", 500},
+                                  {"max_n_eval_4b", 500},
                                   {"dipole_tolerance", 1E-16},
                                   {"dipole_max_it", 100},
                                   {"dipole_method", "cg"},
@@ -1491,7 +1503,7 @@ void System::AddMonomerInfo() {
                            std::to_string(xyz_.size());
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
-
+ 
     // Copy xyz_ and clear it.
     std::vector<double> xyz = xyz_;
     xyz_.clear();
@@ -1693,7 +1705,7 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
     systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_, dimers, trimers, tetramers, use_ghost_);
     if (nmax == 2) return dimers;
     if (nmax == 3) return trimers;
-    if (nmax == 3) return tetramers;
+    if (nmax == 4) return tetramers;
 }
 
 void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map) {
@@ -1743,7 +1755,6 @@ double System::Energy(bool do_grads) {
 #ifdef TIMING
     auto t2 = std::chrono::high_resolution_clock::now();
 #endif
-
     // double e2b = 0.0;
     double e2b = Get2B(do_grads);
 
@@ -1772,6 +1783,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     // double e3b = 0.0;
+   
     double e3b = Get3B(do_grads);
 
 #ifdef TIMING
@@ -1786,7 +1798,7 @@ double System::Energy(bool do_grads) {
     auto t5 = std::chrono::high_resolution_clock::now();
 #endif
 
-    double e4b = GetNB(do_grads,4,tetramers_);
+    double e4b = GetNB(do_grads, 4);
 
 #ifdef TIMING
     auto t6 = std::chrono::high_resolution_clock::now();
@@ -1801,7 +1813,8 @@ double System::Energy(bool do_grads) {
               << "FF = " << eff << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
-              << "Disp = " << edisp << std::endl
+              << "4B = " << e4b << std::endl
+	      << "Disp = " << edisp << std::endl
               << "Buck = " << ebuck << std::endl
               << "LJ = " << elj << std::endl
               << "Elec = " << Eelec << std::endl
@@ -2158,6 +2171,7 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         size_t nd = 0;
         size_t nd_tot = 0;
         size_t nd_bad = 0;
+	
 
         // Loop over all the dimers
         while (2 * nd_tot < dimers.size()) {
@@ -2478,53 +2492,53 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                 }
 
                 if (use_poly) {
-                    std::vector<double> xyz1(coord1.size(), 0.0);
-                    std::vector<double> xyz2(coord2.size(), 0.0);
-                    std::vector<double> xyz3(coord3.size(), 0.0);
-                    std::copy(coord1.begin(), coord1.end(), xyz1.begin());
-                    std::copy(coord2.begin(), coord2.end(), xyz2.begin());
-                    std::copy(coord3.begin(), coord3.end(), xyz3.begin());
+		  std::vector<double> xyz1(coord1.size(), 0.0);
+		  std::vector<double> xyz2(coord2.size(), 0.0);
+		  std::vector<double> xyz3(coord3.size(), 0.0);
+		  std::copy(coord1.begin(), coord1.end(), xyz1.begin());
+		  std::copy(coord2.begin(), coord2.end(), xyz2.begin());
+		  std::copy(coord3.begin(), coord3.end(), xyz3.begin());
 
-                    if (do_grads) {
-                        // POLYNOMIALS
-                        std::vector<double> grad1(coord1.size(), 0.0);
-                        std::vector<double> grad2(coord2.size(), 0.0);
-                        std::vector<double> grad3(coord3.size(), 0.0);
-                        std::vector<double> virial(9, 0.0);  // declare virial tensor
-                        // POLYNOMIALS
-                        double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+		  if (do_grads) {
+		    // POLYNOMIALS
+		    std::vector<double> grad1(coord1.size(), 0.0);
+		    std::vector<double> grad2(coord2.size(), 0.0);
+		    std::vector<double> grad3(coord3.size(), 0.0);
+		    std::vector<double> virial(9, 0.0);  // declare virial tensor
+		    // POLYNOMIALS
+		    double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
 
-                        double escale = 1.0;
-                        if (use_ghost)
-                            escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
-                                     one_third;
-                        e3b_pool[rank] += escale * e;
+		    double escale = 1.0;
+		    if (use_ghost)
+		      escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
+			one_third;
+		    e3b_pool[rank] += escale * e;
 
-                        // Update gradients
-                        size_t i0 = nt_tot * 3;
-                        for (size_t k = 0; k < nt; k++) {
-                            // Monomer 1
-                            for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k]]; j++) {
-                                grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k]] + j] +=
-                                    grad1[k * 3 * nat_[trimers[i0 + 3 * k]] + j];
-                            }
-                            // Monomer 2
-                            for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 1]]; j++) {
-                                grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 1]] + j] +=
-                                    grad2[k * 3 * nat_[trimers[i0 + 3 * k + 1]] + j];
-                            }
-                            // Monomer 3
-                            for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 2]]; j++) {
-                                grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 2]] + j] +=
-                                    grad3[k * 3 * nat_[trimers[i0 + 3 * k + 2]] + j];
-                            }
+		    // Update gradients
+		    size_t i0 = nt_tot * 3;
+		    for (size_t k = 0; k < nt; k++) {
+		      // Monomer 1
+		      for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k]]; j++) {
+			grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k]] + j] +=
+			  grad1[k * 3 * nat_[trimers[i0 + 3 * k]] + j];
+		      }
+		      // Monomer 2
+		      for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 1]]; j++) {
+			grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 1]] + j] +=
+			  grad2[k * 3 * nat_[trimers[i0 + 3 * k + 1]] + j];
+		      }
+		      // Monomer 3
+		      for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 2]]; j++) {
+			grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 2]] + j] +=
+			  grad3[k * 3 * nat_[trimers[i0 + 3 * k + 2]] + j];
+		      }
                         }
                         // Virial Tensor
                         for (size_t j = 0; j < 9; j++) {
                             virial_pool[rank][j] += escale * virial[j];
                         }
 
-                    } else {
+		  } else {
                         // POLYNOMIALS
                         double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
                         double escale = 1.0;
@@ -2532,7 +2546,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                             escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
                                      one_third;
                         e3b_pool[rank] += escale * e;
-                    }
+		  }
                 }
 
                 // Update iteration variables
@@ -2589,7 +2603,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
   ////////
 
-  double System::NBodyEnergy(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost) {
+  double System::NBodyEnergy(bool do_grads, int N, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -2604,7 +2618,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
     SetPBC(box_);
     if (N==4)
-      energy_ = GetNB(do_grads, N, nmers, use_ghost);
+      energy_ = GetNB(do_grads, N, use_ghost);
     if (N==3)
       energy_ = Get3B(do_grads, use_ghost);
     if (N==2)
@@ -2613,7 +2627,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     return energy_;
 }
  
-  double System::GetNB(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost) {
+  double System::GetNB(bool do_grads, int N, bool use_ghost) {
     // 4B ENERGY
     double enb_t = 0.0;
     const double one_N = 1.0 / N;
@@ -2661,17 +2675,18 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
       // This iend definition is making sure that we don't go passed
       // the number of monomers
-
+      
       size_t iend = std::min(istart + step, nummon_);
 
+      //std::vector<size_t> nmers;
       std::vector<size_t> nmers;
 #ifdef _OPENMP
       if(N==2)
 	nmers = AddClustersParallel(2, cutoff2b_, istart, iend, use_ghost);
       if(N==3)
 	nmers = AddClustersParallel(3, cutoff3b_, istart, iend, use_ghost);
-      // if(N==4)
-      // 	std::vector<size_t> nmers = AddClustersParallel(4, cutoff4b_, istart, iend, use_ghost);
+      if(N==4)
+      	nmers = AddClustersParallel(4, cutoff4b_, istart, iend, use_ghost);
 #else
       if(N==2){
 	AddClusters(2, cutoff2b_, istart, iend, use_ghost);
@@ -2681,10 +2696,10 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 	AddClusters(3, cutoff3b_, istart, iend, use_ghost);
 	nmers = trimers_;
       }
-      // if(N==4){
-      // 	AddClusters(4, cutoff4b_, istart, iend, use_ghost);
-      // 	std::vector<size_t> nmers = tetramers_;
-      //}
+      if(N==4){
+      	AddClusters(4, cutoff4b_, istart, iend, use_ghost);
+      	nmers = tetramers_;
+      }
 #endif
 
       // In order to continue, we need at least one dimer
@@ -2700,30 +2715,35 @@ double System::Get3B(bool do_grads, bool use_ghost) {
       // polynomials. Thus, we need to create a pair of vectors with the right
       // coordinates to pass to polynomials and dispersion
 
-      // std::vector<double> coord1;
-      // if(N>1)
-      //   std::vector<double> coord2;
-      // if(N>2)
-      // std::vector<double> coord3;
-      // if(N>3)
-      //   std::vector<double> coord4;
 
 
-      std::vector<std::string> m_vec;
-      std::vector<std::vector<double>> coord_vec(N);
-      for (int i = 0; i < N; i++){
-	m_vec.push_back(monomers_[nmers[i]]);
+#ifdef Debug
+      std::cout<<"Writing N-mers:"<<std::endl;
+      for (int i = 0; i < nmers.size(); i++){
+	std::cout << nmers[i] << " ";
+	if((i+1)%N==0){
+	  std::cout<<std::endl;
+	}
       }
+#endif
+      
+      
+      std::vector<std::string> m_vec(N);
+      std::vector<std::vector<double>> coord_vec(N);// , vector<double> (3,0)); 
+      
+      for (int i = 0; i < N; i++)
+	m_vec[i]=monomers_[nmers[i]];
+    
       size_t _maxNEval;
       if(N==2){
-	 _maxNEval = (use_ghost) ? 1 : maxNDimEval_;
+	_maxNEval = (use_ghost) ? 1 : maxNDimEval_;
       }
       else if(N==3){
 	_maxNEval = (use_ghost) ? 1 : maxNTriEval_;
       }
-      // else if(N==4){
-      // 	size_t _maxNEval = (use_ghost) ? 1 : maxNTetEval_;
-      // }
+      else if(N==4){
+      	_maxNEval = (use_ghost) ? 1 : maxNTetEval_;
+      }
 
       // Initialize the iteration variables
       size_t i = 0;
@@ -2738,38 +2758,46 @@ double System::Get3B(bool do_grads, bool use_ghost) {
       while (N * nt_tot < nmers.size()) {
 	i = (nt_tot + nt) * N;
 
-	bool sameNmer=1;
+#ifdef Debug
+	std::cout << "i: "<<i<< ", nt: "<<nt<<", nt_tot: "<<nt_tot<<std::endl;
+#endif
+	
+	bool sameNmer = true;
 	for (int k = 0; k < N; k++)
-	  sameNmer*=(monomers_[nmers[i+k]]==m_vec[k]);
+	  sameNmer = sameNmer and (m_vec[k] == monomers_[nmers[i+k]]);
 	    
 	// Check if we are still in the same type of trimer
 	if (sameNmer) {
 	  for (int k = 0; k < N; k++){
-	    for (size_t j = 0; j < 3 * nat_[nmers[i]]; j++) 
-	      coord_vec[k][j]=xyz_[3 * first_index_[nmers[i]] + j];
+	    for (size_t j = 0; j < 3 * nat_[nmers[i+k]]; j++) 
+	      coord_vec[k].push_back(xyz_[3 * first_index_[nmers[i+k]] + j]);
 	  }
 	  nt++;
 	} 
-			 
-	bool diffMonomer=0;
+
+	bool diffMonomer = false;
 	for (int k = 0; k < N; k++)
-	  diffMonomer =diffMonomer || (monomers_[nmers[i+k]]==m_vec[k]);
+	  diffMonomer = diffMonomer || (monomers_[nmers[i+k]]!=m_vec[k]);
 	diffMonomer = diffMonomer ||(nt == _maxNEval)||(i == nmers.size() - N);
+
+
+#ifdef Debug
+	std::cout << "sameNmer: " << sameNmer << ", diffNmer: " << diffMonomer <<std::endl;
+#endif
+
 	// If one of the monomers is different as the previous one
 	// since trimers are also ordered, means that no more trimers of that
 	// type exist. Thus, do calculation, update m? and clear xyz
 	if (diffMonomer) {
 	  if (nt == 0) {
-
 	    coord_vec.clear();
-	    m_vec.clear();
 	    for (int k = 0; k < N; k++)
 	      m_vec[k]=monomers_[nmers[i+k]];
 	    continue;
 	  }
-
+ 
 	  // Fix trimer positions if pbc
-		 
+ 		 
 	  if (use_pbc_) {
 	    if(N==2){
 	      systools::GetCloseDimerImage(box_, box_inverse_, nat_[nmers[nt_tot * N]],
@@ -2784,174 +2812,181 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 	    else{
 	      for (int k = 0; k < N; k++){
 		systools::GetCloseDimerImage(box_, box_inverse_, nat_[nmers[nt_tot * N]],
-					   nat_[nmers[nt_tot * N + k]], nt,
-					   coord_vec[0].data(), coord_vec[k].data());
+					     nat_[nmers[nt_tot * N + k]], nt,
+					     coord_vec[0].data(), coord_vec[k].data());
 	      }
 	    }
-	    
-	    // Check if this pair needs to use MB-nrg
-	    bool use_poly = true;
-	    std::vector<std::string> v1;
-	    std::vector<std::string> v2;
-	    if(N==2){
-	      for (size_t i2b = 0; i2b < ignore_2b_poly_.size(); i2b++) {
-		v1 = ignore_2b_poly_[i2b];
-		v2 = {m_vec[0], m_vec[1]};
-		std::sort(v1.begin(), v1.end());
-		std::sort(v2.begin(), v2.end());
-
-		if (v1 == v2) {
-		  use_poly = false;
-		  break;
-		}
-	      }
-	    }
-	    else if(N==3){
-	      for (size_t i3b = 0; i3b < ignore_3b_poly_.size(); i3b++) {
-		v1 = ignore_3b_poly_[i3b];
-		v2 = {m_vec[0], m_vec[1], m_vec[2]};
-		std::sort(v1.begin(), v1.end());
-		std::sort(v2.begin(), v2.end());
-
-		if (v1 == v2) {
-		  use_poly = false;
-		  break;
-		}
-	      }
-	    }
-	    else if(N==4){
-	      for (size_t i4b = 0; i4b < ignore_4b_poly_.size(); i4b++) {
-		v1 = ignore_4b_poly_[i4b];
-		v2 = {m_vec[0], m_vec[1], m_vec[2], m_vec[3]};
-		std::sort(v1.begin(), v1.end());
-		std::sort(v2.begin(), v2.end());
-
-		if (v1 == v2) {
-		  use_poly = false;
-		  break;
-		}
-	      }
-
-	    }
-
-
-
-	    double escale = 1.0;
-	    if (use_ghost)
-	      {
-		escale = 0.0;
-		for (int k = 0; k < N; k++)
-		  escale += islocal_[nmers[i+k]];
-		escale=escale*one_N;
-	      }
- 		   
-	    if (use_poly) {
-	      ////CONTINUE
-	      std::vector<std::vector<double>> xyz_vec(N);
-	      for (int k = 0; k < N; k++)
-		std::copy(coord_vec[k].begin(), coord_vec[k].end(), xyz_vec[k].begin());
-
-	      if (do_grads) {
-		// POLYNOMIALS
-		std::vector<std::vector<double>>grad_vec(N);
-		for (int k = 0; k < N; k++)
-		  grad_vec[k] = std::vector<double>(coord_vec[k].size(), 0.0);
-
-			  
-		std::vector<double> virial(9, 0.0);  // declare virial tensor
-		// POLYNOMIALS
-		double e;
-		if(N==2)
-		  e = e2b::get_2b_energy(m_vec[0], m_vec[1], nt, xyz_vec[0], xyz_vec[1],  grad_vec[0], grad_vec[1], &virial);
-		if(N==3)
-		  e = e3b::get_3b_energy(m_vec[0], m_vec[1], m_vec[2], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2], grad_vec[0], grad_vec[1],grad_vec[2], &virial);
-		// if(N==4)
-		//   double e = e4b::get_4b_energy(m_vec[0], m_vec[1], m_vec[2], m_vec[3], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2],xyz_vec[4], grad_vec[0], grad_vec[1],grad_vec[2],grad_vec[3], &virial);
-
-		enb_pool[rank] += escale * e;
-		
-		// Update gradients
-		size_t i0 = nt_tot * N;
-		for (size_t k = 0; k < nt; k++) {
-		  // Monomer 1
-
-		  for (int l = 0; l < N; l++){
-		    for (size_t j = 0; j < 3 * nat_[nmers[i0 + N * k]]; j++) {
-		      grad_pool[rank][3 * first_index_[nmers[i0 + N * k]] + j] +=
-			grad_vec[l][k * 3 * nat_[nmers[i0 + N * k]] + j];
-		    }
-		  }
-		}                        // Virial Tensor
-		for (size_t j = 0; j < 9; j++) {
-		  virial_pool[rank][j] += escale * virial[j];
-		}
-
-	      } else {
-		// POLYNOMIALS
-		double e;
-		if(N==2)
-		  e = e2b::get_2b_energy(m_vec[0], m_vec[1], nt, xyz_vec[0], xyz_vec[1]);
-		if(N==3)
-		  e = e3b::get_3b_energy(m_vec[0], m_vec[1], m_vec[2], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2]);
-		// if(N==4)
-		//   double e = e4b::get_4b_energy(m_vec[0], m_vec[1], m_vec[2], m_vec[3], nt, xyz_vec[1], xyz_vec[1], xyz_vec[2],xyz_vec[4]);
-
-		    
-		enb_pool[rank] += escale * e;
-	      }
-	    }
-
-	    // Update iteration variables
-	    nt_tot += nt;
-	    nt = 0;
-	    coord_vec.clear();
-	      for (int i = 0; i < N; i++){
-		m_vec.push_back(monomers_[nmers[i]]);
-	      }
 	  }
-        }
-      }
+	    
+	  // Check if this pair needs to use MB-nrg
+	  bool use_poly = true;
+	  std::vector<std::string> v1;
+	  std::vector<std::string> v2;
+	  if(N==2){
+	    for (size_t i2b = 0; i2b < ignore_2b_poly_.size(); i2b++) {
+	      v1 = ignore_2b_poly_[i2b];
+	      v2 = {m_vec[0], m_vec[1]};
+	      std::sort(v1.begin(), v1.end());
+	      std::sort(v2.begin(), v2.end());
 
+	      if (v1 == v2) {
+		use_poly = false;
+		break;
+	      }
+	    }
+	  }
+	  else if(N==3){
+	    for (size_t i3b = 0; i3b < ignore_3b_poly_.size(); i3b++) {
+	      v1 = ignore_3b_poly_[i3b];
+	      v2 = {m_vec[0], m_vec[1], m_vec[2]};
+	      std::sort(v1.begin(), v1.end());
+	      std::sort(v2.begin(), v2.end());
+
+	      if (v1 == v2) {
+		use_poly = false;
+		break;
+	      }
+	    }
+	  }
+	  else if(N==4){
+	    for (size_t i4b = 0; i4b < ignore_4b_poly_.size(); i4b++) {
+	      v1 = ignore_4b_poly_[i4b];
+	      v2 = {m_vec[0], m_vec[1], m_vec[2], m_vec[3]};
+	      std::sort(v1.begin(), v1.end());
+	      std::sort(v2.begin(), v2.end());
+
+	      if (v1 == v2) {
+		use_poly = false;
+		break;
+	      }
+	    }
+
+	  }
+
+
+
+	  double escale = 1.0;
+	  if (use_ghost)
+	    {
+	      escale = 0.0;
+	      for (int k = 0; k < N; k++)
+		escale += islocal_[nmers[i+k]];
+	      escale=escale*one_N;
+	    }
+ 		   
+	  if (use_poly) {
+	    ////CONTINUE
+	    std::vector<std::vector<double>> xyz_vec;
+	    for (int k = 0; k < N; k++)
+	      xyz_vec.push_back(coord_vec[k]);
+		
+		//	      std::copy(coord_vec[k].begin(), coord_vec[k].end(), xyz_vec[k].begin());
+
+	    if (do_grads) {
+	      
+	      // POLYNOMIALS
+	      std::vector<std::vector<double>> grad_vec(N);
+	      for (int k = 0; k < N; k++)
+		grad_vec[k] = std::vector<double>(coord_vec[k].size(),0);
+	      
+		  //grad_vec.push_back(std::vector<double>(coord_vec[k].size(), 0.0));
+			  
+	      std::vector<double> virial(9, 0.0);  // declare virial tensor
+	      // POLYNOMIALS
+	      double e;
+	      if(N==2)
+		e = e2b::get_2b_energy(m_vec[0], m_vec[1], nt, xyz_vec[0], xyz_vec[1],  grad_vec[0], grad_vec[1], &virial);
+	      if(N==3)
+		e = e3b::get_3b_energy(m_vec[0], m_vec[1], m_vec[2], nt, xyz_vec[0], xyz_vec[1], xyz_vec[2], grad_vec[0], grad_vec[1],grad_vec[2], &virial);
+	      if(N==4)
+		e = e4b::get_4b_energy(m_vec[0], m_vec[1], m_vec[2], m_vec[3], nt, xyz_vec[0], xyz_vec[1], xyz_vec[2],xyz_vec[3], grad_vec[0], grad_vec[1],grad_vec[2],grad_vec[3], &virial);
+
+	      enb_pool[rank] += escale * e;
+		
+	      // Update gradients
+	      size_t i0 = nt_tot * N;
+	      for (size_t k = 0; k < nt; k++) {
+		// Monomer 1
+
+		for (int l = 0; l < N; l++){
+		  for (size_t j = 0; j < 3 * nat_[nmers[i0 + N * k]]; j++) {
+		    grad_pool[rank][3 * first_index_[nmers[i0 + N * k]] + j] +=
+		      grad_vec[l][k * 3 * nat_[nmers[i0 + N * k]] + j];
+		  }
+		}
+	      }                        // Virial Tensor
+	      for (size_t j = 0; j < 9; j++) {
+		virial_pool[rank][j] += escale * virial[j];
+	      }
+	    
+	
+	    } else {
+	      // POLYNOMIALS
+	      double e;
+	      if(N==2)
+		e = e2b::get_2b_energy(m_vec[0], m_vec[1], nt, xyz_vec[0], xyz_vec[1]);
+	      if(N==3)
+		e = e3b::get_3b_energy(m_vec[0], m_vec[1], m_vec[2], nt, xyz_vec[0], xyz_vec[1], xyz_vec[2]);
+	      if(N==4)
+		e = e4b::get_4b_energy(m_vec[0], m_vec[1], m_vec[2], m_vec[3], nt, xyz_vec[0], xyz_vec[1], xyz_vec[2],xyz_vec[3]);
+
+	      //	      std::cout<<"energy: "<<e<<std::endl;
+	
+	      enb_pool[rank] += escale * e;
+	    }
+	  }
+	  
+	  // Update iteration variables
+	  nt_tot += nt;
+	  nt = 0;
+	  coord_vec.clear();
+	  for (int l = 0; l < N; l++)
+	    m_vec.push_back(monomers_[nmers[i+l]]);    
+	}
+      }
+    }
+  
 #ifdef _OPENMP
 #pragma omp parallel private(first_grad, last_grad, rank)
-      {
-        rank = omp_get_thread_num();
+    {
+      rank = omp_get_thread_num();
 
-        first_grad = 0 + rank * grad_step;
+      first_grad = 0 + rank * grad_step;
 
-        last_grad = (rank + 1) * grad_step;
-        if (rank == num_threads - 1) {
-	  last_grad = 3 * numsites_;
-        }
+      last_grad = (rank + 1) * grad_step;
+      if (rank == num_threads - 1) {
+	last_grad = 3 * numsites_;
+      }
 #pragma omp barrier
 #endif
 
-        // Condensate gradients
-        for (int i = 0; i < num_threads; i++) {
-	  for (size_t j = first_grad; j < last_grad; j++) {
-	    grad_[j] += grad_pool[i][j];
-	  }
-        }
-
-#ifdef _OPENMP
-      }  // parallel
-#endif
-
-      // Condensate energy
-      for (int i = 0; i < num_threads; i++) 
-	  enb_t += enb_pool[i];
-	  
-      // Condensate virial
+      // Condensate gradients
       for (int i = 0; i < num_threads; i++) {
-	for (size_t j = 0; j < 9; j++) {
-	  virial_[j] += virial_pool[i][j];
+	for (size_t j = first_grad; j < last_grad; j++) {
+	  grad_[j] += grad_pool[i][j];
 	}
       }
-      
-      return enb_t;
-      
+
+#ifdef _OPENMP
+    }  // parallel
+#endif
+
+    // Condensate energy
+    for (int i = 0; i < num_threads; i++) 
+      enb_t += enb_pool[i];
+	  
+    // Condensate virial
+    for (int i = 0; i < num_threads; i++) {
+      for (size_t j = 0; j < 9; j++) {
+	virial_[j] += virial_pool[i][j];
+      }
     }
+      
+    return enb_t;
+      
   }
+
+
 
 
   

@@ -27,19 +27,24 @@ std::vector<double> Polynomial::eval_variables(const std::vector<double>& distan
 }
 
 double Polynomial::eval_switch(const std::vector<double>& distances) const {
-  
+
   double m_ri, m_ro;
   if(1 == distances.size())
     {
-      m_ri = 7;
-      m_ro = 10;
+      m_ri = 7.0;
+      m_ro = 10.0;
     }
-  else
+  else if(3 == distances.size())
     {
       m_ri = 3.5;
       m_ro = 5.5;
     }
-
+  else
+    {
+      m_ri = 4.5;
+      m_ro = 6.5;
+    }
+  
   std::vector<double> tcs(distances.size());
  
   for(int i = 0; i < distances.size(); i++) {
@@ -61,9 +66,13 @@ double Polynomial::eval_switch(const std::vector<double>& distances) const {
     {
       return tcs[0];
     }
-  else
+  else if (3 == distances.size())
     {
       return tcs[0]*tcs[1]+tcs[0]*tcs[2]+tcs[1]*tcs[2];
+    }
+  else
+    {
+       return tcs[0]*tcs[1]*tcs[2]*tcs[3]*tcs[4]*tcs[5];
     }
   
   // double r = distances[0];
@@ -230,14 +239,19 @@ std::vector<double> Polynomial::switch_gradient(const std::vector<double>& dista
   double m_ri, m_ro;
   if(1 == distances.size())
     {
-      m_ri = 7;
-      m_ro = 10;
+      m_ri = 7.0;
+      m_ro = 10.0;
     }
-  else
+  else if(3 == distances.size())
     {
       m_ri = 3.5;
       m_ro = 5.5;
     }
+  else
+    {
+      m_ri = 4.5;
+      m_ro = 6.5;
+     }
   
   for(int i = 0; i < distances.size(); i++) {
     double r = distances[i];
@@ -261,6 +275,16 @@ std::vector<double> Polynomial::switch_gradient(const std::vector<double>& dista
       gradients[0]=gradients[0]*(tcs[1]+tcs[2]);
       gradients[1]=gradients[1]*(tcs[0]+tcs[2]);
       gradients[2]=gradients[2]*(tcs[0]+tcs[1]);
+    }
+  else if(3 == distances.size())
+    {
+      gradients[0]=gradients[0]*(tcs[1]*tcs[2]*tcs[3]*tcs[4]*tcs[5]);
+      gradients[1]=gradients[1]*(tcs[0]*tcs[2]*tcs[3]*tcs[4]*tcs[5]);
+      gradients[2]=gradients[2]*(tcs[1]*tcs[0]*tcs[3]*tcs[4]*tcs[5]);
+      gradients[3]=gradients[3]*(tcs[1]*tcs[2]*tcs[0]*tcs[4]*tcs[5]);
+      gradients[4]=gradients[4]*(tcs[1]*tcs[2]*tcs[3]*tcs[0]*tcs[5]);
+      gradients[5]=gradients[5]*(tcs[1]*tcs[0]*tcs[3]*tcs[4]*tcs[0]);
+   
     }
 
   return gradients;

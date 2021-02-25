@@ -621,6 +621,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
     if (nmon2 < 2) return;
     if (n_max > 2 && nmon2 < 3) return;
+    if (n_max > 3 && nmon2 < 4) return;
 
  
     // Obtain the data in the structure needed by the kd-tree
@@ -666,7 +667,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
       }
     }
   
-    //#define Debug 1
+
 #ifdef Debug
     std::cout<<iend-istart<<" "<<nmon<<" "<<nmon2<<std::endl;
     for(int i = 0; i < nmon2; i++) 
@@ -678,8 +679,9 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
       }
 #endif
  
-    
-    for (int n_max_i = 2; n_max_i <  n_max+1; n_max_i++){
+
+    int n_max_i=n_max;
+    //for (int n_max_i = 2; n_max_i <  n_max+1; n_max_i++){
       // std::cout << n_max_i << "-body, number of vert "<< nmon2 <<endl;
       SubGraphs B(nmon2, n_max_i, neighborList, iend-istart);
       B.Enumerate();
@@ -687,11 +689,10 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
       //B.SubGraphs::~SubGraphs();
 
 #ifdef Debug
-     
       std::cout<<"Number of subgraphs with size "<< n_max_i<<": "<<subgraphs.size()<<endl;
       for(int i = 0; i <  subgraphs.size(); i++){
 	for(int j = 0; j <  n_max_i; j++)
-	  std::cout<<subgraphs[i][j]<<" ";
+	  std::cout<<mon_index[subgraphs[i][j]-1]<<" ";
 	std::cout<<endl;
       }
 #endif
@@ -705,17 +706,21 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	  { 
 	    if(n_max_i==2)
 	      {
+		std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
 		dimers.push_back(mon_index[subgraphs[i][0]-1]);
 		dimers.push_back(mon_index[subgraphs[i][1]-1]);
 	      }
 	    else if(n_max_i==3)
 	      {
+		std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
 		trimers.push_back(mon_index[subgraphs[i][0]-1]);
 		trimers.push_back(mon_index[subgraphs[i][1]-1]);
 		trimers.push_back(mon_index[subgraphs[i][2]-1]);
+		
 	      }
 	    else if(n_max_i==4)
 	      {
+		std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
 		tetramers.push_back(mon_index[subgraphs[i][0]-1]);
 		tetramers.push_back(mon_index[subgraphs[i][1]-1]);
 		tetramers.push_back(mon_index[subgraphs[i][2]-1]);
@@ -723,7 +728,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	      }
 	  }
       }
-    }
+      //    }
     //size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
     // is_local[mon_index[ret_matches[k].first]] + is_local[mon_index[ret_matches[l].first]];
     

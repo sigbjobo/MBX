@@ -43,6 +43,7 @@ namespace e2b {
 
 double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2) {
+
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;

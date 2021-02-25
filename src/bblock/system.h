@@ -64,6 +64,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/energy2b.h"
 // 3B
 #include "potential/3b/energy3b.h"
+// 4B
+#include "potential/4b/energy4b.h"
 // DISPERSION
 #include "potential/dispersion/dispersion.h"
 // LENNARD-JONES
@@ -376,6 +378,12 @@ class System {
      * @return Vector of string vectors with the trimers to be ignored
      */
     std::vector<std::vector<std::string> > Get3bIgnorePoly();
+
+    /**
+     * Gets the whole vector for which the 4b polynomials won't be calculated
+     * @return Vector of string vectors with the trimers to be ignored
+     */
+    std::vector<std::vector<std::string> > Get4bIgnorePoly();
 
     /**
      * Gets the virial tensor
@@ -952,7 +960,7 @@ class System {
      * only local monomers included (default)
      * @return Three-body energy of the system
      */
-    double NBodyEnergy(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost = 0);
+    double NBodyEnergy(bool do_grads, int N, bool use_ghost = 0);
 
     /**
      * Obtains the electrostatic energy. This is the sum of the permanent
@@ -1127,7 +1135,7 @@ class System {
      * @param[in] nmers vector of int. Vector containing N-mers.
      * @return  N-body energy of the system
      */
-    double GetNB(bool do_grads, int N, std::vector<size_t> nmers, bool use_ghost=0);
+    double GetNB(bool do_grads, int N, bool use_ghost=0);
 
     /**
      * Private function to internally get the electrostatic energy.

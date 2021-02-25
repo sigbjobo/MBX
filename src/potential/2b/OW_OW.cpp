@@ -132,7 +132,6 @@ double OW_OW::eval(const double* xyz0, const double* xyz1, const size_t ndim) co
             }
         }
   
-	
         energies.push_back(poly->eval(distances) * poly->eval_switch(distances));
 
     }
