@@ -653,8 +653,9 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	ret_matches[j].first -= nmon2 * pos;
       }
 
+      //Has to be reverse order for subgraph construction
       std::sort(ret_matches.rbegin(), ret_matches.rend(), ComparePair);
-      
+       
       neighborList[i] = new int[nMatches];
       neighborList[i][0]=nMatches-1;
 
