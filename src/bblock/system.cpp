@@ -36,7 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define DEBUG
 //#define TIMING
-//#define PRINT_INDIVIDUAL_TERMS
+#define PRINT_INDIVIDUAL_TERMS
 
 #ifdef TIMING
 #include <chrono>
@@ -2665,7 +2665,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 #ifdef _OPENMP
       rank = omp_get_thread_num();
 #endif
-
+      
       // We loop over all the monomers, and we get all the trimers
       // in which this monomer is involved
 
@@ -2680,6 +2680,11 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
       //std::vector<size_t> nmers;
       std::vector<size_t> nmers;
+#define Debug 1
+#ifdef Debug
+      std::cout<<"Computing N-mers:"<<std::endl;
+#endif
+      
 #ifdef _OPENMP
       if(N==2)
 	nmers = AddClustersParallel(2, cutoff2b_, istart, iend, use_ghost);
@@ -2757,10 +2762,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
       // Loop over all the trimers
       while (N * nt_tot < nmers.size()) {
 	i = (nt_tot + nt) * N;
-
-#ifdef Debug
-	std::cout << "i: "<<i<< ", nt: "<<nt<<", nt_tot: "<<nt_tot<<std::endl;
-#endif
+// #ifdef Debug
+// 	std::cout << "i: "<<i<< ", nt: "<<nt<<", nt_tot: "<<nt_tot<<std::endl;
+// #endif
 	
 	bool sameNmer = true;
 	for (int k = 0; k < N; k++)
@@ -2781,18 +2785,20 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 	diffMonomer = diffMonomer ||(nt == _maxNEval)||(i == nmers.size() - N);
 
 
-#ifdef Debug
-	std::cout << "sameNmer: " << sameNmer << ", diffNmer: " << diffMonomer <<std::endl;
-#endif
+// #ifdef Debug
+// 	std::cout << "sameNmer: " << sameNmer << ", diffNmer: " << diffMonomer <<std::endl;
+// #endif
 
 	// If one of the monomers is different as the previous one
 	// since trimers are also ordered, means that no more trimers of that
 	// type exist. Thus, do calculation, update m? and clear xyz
 	if (diffMonomer) {
 	  if (nt == 0) {
-	    coord_vec.clear();
 	    for (int k = 0; k < N; k++)
-	      m_vec[k]=monomers_[nmers[i+k]];
+	      {
+		coord_vec[k].clear();
+		m_vec[k]=monomers_[nmers[i+k]];
+	      }
 	    continue;
 	  }
  
@@ -2879,7 +2885,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 	    std::vector<std::vector<double>> xyz_vec;
 	    for (int k = 0; k < N; k++)
 	      xyz_vec.push_back(coord_vec[k]);
-		
+	    
 		//	      std::copy(coord_vec[k].begin(), coord_vec[k].end(), xyz_vec[k].begin());
 
 	    if (do_grads) {
@@ -2939,9 +2945,11 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 	  // Update iteration variables
 	  nt_tot += nt;
 	  nt = 0;
-	  coord_vec.clear();
 	  for (int l = 0; l < N; l++)
-	    m_vec.push_back(monomers_[nmers[i+l]]);    
+	    {
+	    coord_vec[l].clear();
+	    m_vec[l]=monomers_[nmers[i+l]];    
+	    }
 	}
       }
     }
