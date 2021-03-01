@@ -404,7 +404,6 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 }
 
   void GetCloseTetramerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,  size_t nat4,   size_t nt, double *xyz1, double *xyz2, double *xyz3, double *xyz4) {
-
     
     GetCloseDimerImage(box, box_inv, nat1,  nat2,  nt, xyz1,  xyz2);
     GetCloseDimerImage(box, box_inv, nat1,  nat3,  nt, xyz1,  xyz3);
@@ -416,129 +415,6 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
   bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
   
-// void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-// 		   std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-// 		   std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-// 		   std::vector<size_t> &trimers,std::vector<size_t> &tetramers, bool use_ghost) {
-//     // istart is the monomer position for which we will look all dimers and
-//     // trimers that contain it. iend is the last monomer position.
-//     // This means, if istart is 0 and iend is 2, we will look for all dimers
-//     // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
-
-//     // nmon is the number of monomers in xyz
-//     // xyz_orig is a double vector with positions of all atoms
-//     // first_index is a size_t vector with the first index of the site 'i'
-//     // in in the monomer vector
-//     // is_local is local/ghost descriptor for monomers; interactions involving
-//     //  all ghost monomers are ignored
-//     // use_ghost controls whether or not to include ghost monomers in clusters; default is no.
-//     // dimers and trimers will be filled with the dimers and trimers found
-
-//     // if use_ghost == true,
-//     //       include local+ghost monomers in xyz, but only include local-ghost interactions
-//     // if use_ghost == false,
-//     //       include only local monomers in xyz and do nothing special
-
-//     // Perform a radial search within the cutoff
-//     dimers.clear();
-//     if (n_max > 2) trimers.clear();
-
-//     if (n_max > 3) tetramers.clear();
-
-
-//     // if first monomer is ghost and we're not computing local-ghost interactions, then skip
-
-//     if (!use_ghost && !is_local[istart]) return;
-
-//     // Obtain xyz vector with the positions of first atom of each monomer
-//     std::vector<double> xyz;
-//     size_t nmon2 = 0;
-
-//     std::vector<size_t> mon_index;
-//     for (size_t i = istart; i < nmon; i++) {
-//       size_t islsum = is_local[istart] + is_local[i];
-
-//       bool include_monomer = false;
-//       if (n_max == 2) {
-// 	if (i == istart) {
-// 	  if (use_ghost)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	} else {
-// 	  if (use_ghost && islsum == 1)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	}
-//       } else {  // trimer
-// 	if (i == istart) {
-// 	  if (use_ghost)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	} else {
-// 	  if (use_ghost)
-// 	    include_monomer = true;
-// 	  else if (!use_ghost && islsum == 2)
-// 	    include_monomer = true;
-// 	}
-//       }
-
-//       if (include_monomer) {
-// 	xyz.push_back(xyz_orig[3 * first_index[i]]);
-// 	xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
-// 	xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
-// 	mon_index.push_back(i); //First index of atom in monomer
-// 	nmon2++; //Number of monomers included
-//       }
-//     }
-
-//     if (nmon2 < 2) return;
-//     if (n_max > 2 && nmon2 < 3) return;
-
-
-//     // Obtain the data in the structure needed by the kd-tree
-//     kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
-
-//     // Build the tree
-//     // typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-//     //                      kdtutils::PointCloud<double>, 3 /* dim */>
-//   //  my_kd_tree_t;
-//     my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-//     index.buildIndex();
-
-//     int **subgraph;
-//     int subgraphSize = -1, num_random_graphs = 0;
-
-//     bool *Visited;
-
-//     // This array collects the valid children at each layer.
-//    int **childSet;
-    
-//     // This array maps the childSet to the subgraph[level]
-//    int **Index;  
-    
-//     //total number of enumeraed subgraphs.
-//     long long subgraphCounter; 
-
-    
-//     subgraph = new int*[n_max];
-//     for (int i = 0; i < n_max; i++)
-//       subgraph[i] = new int[n_max+1];
-    
-    
-//     Enumerate(subgraph, subgraphSize, Visited,  nmon, Index, childSet, index,cutoff);
-    
-
-//     // for(i = 1; i < subgraphSize; i++) {
-//     //   for(j = 1; i < n_max; i++) {
-	
-//     // 	std::cout<<subgraph
-//     //   }
-//     // }
-
-//   //
 
 
   
@@ -683,11 +559,11 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
     int n_max_i=n_max;
     //for (int n_max_i = 2; n_max_i <  n_max+1; n_max_i++){
-      // std::cout << n_max_i << "-body, number of vert "<< nmon2 <<endl;
-      SubGraphs B(nmon2, n_max_i, neighborList, iend-istart);
-      B.Enumerate();
-      std::vector<std::vector<int>> subgraphs = B.GetSubgraphs();
-      //B.SubGraphs::~SubGraphs();
+    // std::cout << n_max_i << "-body, number of vert "<< nmon2 <<endl;
+    SubGraphs B(nmon2, n_max_i, neighborList, iend-istart);
+    B.Enumerate();
+    std::vector<std::vector<int>> subgraphs = B.GetSubgraphs();
+    //B.SubGraphs::~SubGraphs();
 
 #ifdef Debug
       std::cout<<"Number of subgraphs with size "<< n_max_i<<": "<<subgraphs.size()<<endl;
@@ -704,16 +580,16 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	  islsum += is_local[mon_index[subgraphs[i][j]-1]];
 	
 	if ((!use_ghost && islsum == n_max_i)||(use_ghost && islsum > 0) )
-	  { 
+	  {
+
+	    std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
 	    if(n_max_i==2)
 	      {
-		std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
 		dimers.push_back(mon_index[subgraphs[i][0]-1]);
 		dimers.push_back(mon_index[subgraphs[i][1]-1]);
 	      }
 	    else if(n_max_i==3)
 	      {
-		std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
 		trimers.push_back(mon_index[subgraphs[i][0]-1]);
 		trimers.push_back(mon_index[subgraphs[i][1]-1]);
 		trimers.push_back(mon_index[subgraphs[i][2]-1]);
@@ -721,7 +597,6 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	      }
 	    else if(n_max_i==4)
 	      {
-		std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
 		tetramers.push_back(mon_index[subgraphs[i][0]-1]);
 		tetramers.push_back(mon_index[subgraphs[i][1]-1]);
 		tetramers.push_back(mon_index[subgraphs[i][2]-1]);
