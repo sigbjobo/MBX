@@ -619,7 +619,9 @@ std::vector<std::vector<std::string>> System::Get2bIgnorePoly() { return ignore_
 std::vector<std::vector<std::string>> System::Get3bIgnorePoly() { return ignore_3b_poly_; }
 
 std::vector<std::vector<std::string>> System::Get4bIgnorePoly() { return ignore_4b_poly_; }
-  
+
+bool System::GetUseElec() { return useElec; }
+
 void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
     std::pair<std::string, std::string> p = mon2 < mon1 ? std::make_pair(mon2, mon1) : std::make_pair(mon1, mon2);
 
@@ -731,6 +733,10 @@ void System::Set4bIgnorePoly(std::vector<std::vector<std::string>> ignore_4b) {
         std::sort(p.begin(), p.end());
         ignore_4b_poly_.push_back(p);
     }
+}
+
+void System::SetUseElec(bool useElec_) {
+  useElec=useElec_;
 }
 
 void System::Initialize() {
@@ -941,7 +947,7 @@ void System::SetUpFromJson(nlohmann::json j) {
     // Default: no user-specified grid (empty vector)
     std::vector<int> grid_fftdim_elec;
     try {
-        std::vector<int> grid_fftdim_elec2 = j["MBX"]["grid_fftdim_elec"];
+      std::vector<int> grid_fftdim_elec2= j["MBX"]["grid_fftdim_elec"];
         grid_fftdim_elec = grid_fftdim_elec2;
         //        if(grid_fftdim_elec.size()) std::cerr << "**WARNING** \"grid_fftdim_elec\" is defined in json
         //        file.\n";
@@ -1006,7 +1012,7 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
     cutoff4b_ = cutoff_4b;
     mbx_j_["MBX"]["fourbody_cutoff"] = cutoff_4b;
-
+ 
     
     // Try to get maximum number of evaluations for 1b
     // Default: 1000
@@ -1279,6 +1285,30 @@ void System::SetUpFromJson(nlohmann::json j) {
     Set3bIgnorePoly(ignore_3b_poly);
     mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
 
+
+    std::vector<std::vector<std::string>> ignore_4b_poly;
+    try {
+        std::vector<std::vector<std::string>> ignore_4b_poly2 = j["MBX"]["ignore_4b_poly"];
+        ignore_4b_poly = ignore_4b_poly2;
+    } catch (...) {
+        ignore_4b_poly.clear();
+        std::cerr << "**WARNING** \"ignore_4b_poly\" is not defined in json file. Using empty list.\n";
+    }
+    Set4bIgnorePoly(ignore_4b_poly);
+    mbx_j_["MBX"]["ignore_4b_poly"] = ignore_4b_poly_;
+
+    bool useElec=true;
+    try {
+        bool useElec2 = j["MBX"]["use_elec"];
+        useElec = useElec2;
+    } catch (...) {
+        std::cerr << "**WARNING** \"use_elec\" is not defined in json file. Electrostratics is computed.\n";
+    }
+    SetUseElec(useElec);
+    mbx_j_["MBX"]["use_elec"] = useElec;
+
+
+    
     std::string connectivity_file = "";
     try {
         connectivity_file = j["MBX"]["connectivity_file"];
@@ -1791,8 +1821,10 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Electrostatic energy
-    double Eelec = GetElectrostatics(do_grads);
-    // double Eelec = 0.0;
+    double Eelec = 0.0;
+    if(GetUseElec())
+      Eelec = GetElectrostatics(do_grads);
+    
 
 #ifdef TIMING
     auto t5 = std::chrono::high_resolution_clock::now();
@@ -2657,7 +2689,6 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     std::vector<double> enb_pool(num_threads, 0.0);
     std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
     std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0));  // declare virial pool
-
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) private(rank)
 #endif  // _OPENMP
@@ -2680,7 +2711,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
       //std::vector<size_t> nmers;
       std::vector<size_t> nmers;
-#define Debug 1
+
 #ifdef Debug
       std::cout<<"Computing N-mers:"<<std::endl;
 #endif
