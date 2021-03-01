@@ -114,6 +114,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     else if (strcmp("co2", mol_names[i]) == 0) num_atoms_per_mol[i] = 3;
     else if (strcmp("ch4", mol_names[i]) == 0) num_atoms_per_mol[i] = 5;
     else if (strcmp("he", mol_names[i]) == 0) num_atoms_per_mol[i] = 1;
+    else if (strcmp("ow", mol_names[i]) == 0) num_atoms_per_mol[i] = 1;
     else error->all(FLERR,"Unsupported molecule type in MBX");
   }
 
@@ -705,6 +706,7 @@ void FixMBX::mbx_init()
       else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("ow",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
       else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
       else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
@@ -750,8 +752,8 @@ void FixMBX::mbx_init()
 	else if(strcmp("cl",mol_names[mtype])  == 0) {
 	  names.push_back("Cl");
 	}
-	else if(strcmp("he",mol_names[mtype])  == 0) {
-	  names.push_back("He");
+	else if(strcmp("ow",mol_names[mtype])  == 0) {
+	  names.push_back("O");
 	}
 	else if(strcmp("co2",mol_names[mtype]) == 0) {
 	  names.push_back("C");
@@ -923,6 +925,7 @@ void FixMBX::mbx_init_local()
       else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("ow",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
       else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
       else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
@@ -968,6 +971,9 @@ void FixMBX::mbx_init_local()
 	}
 	else if(strcmp("he",mol_names[mtype])  == 0) {
 	  names.push_back("He");
+	}
+	else if(strcmp("ow",mol_names[mtype])  == 0) {
+	  names.push_back("O");
 	}
 	else if(strcmp("co2",mol_names[mtype]) == 0) {
 	  names.push_back("C");
@@ -1157,6 +1163,7 @@ void FixMBX::mbx_init_full()
       else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("ow",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
       else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
       else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
@@ -1206,6 +1213,9 @@ void FixMBX::mbx_init_full()
 	}
 	else if(strcmp("he",mol_names[mtype])  == 0) {
 	  names.push_back("He");
+	}
+	else if(strcmp("ow",mol_names[mtype])  == 0) {
+	  names.push_back("O");
 	}
 	else if(strcmp("co2",mol_names[mtype]) == 0) {
 	  names.push_back("C");
@@ -1313,6 +1323,23 @@ void FixMBX::mbx_init_full()
 	molec.push_back(nm++);
 	
 	ptr_mbx_full->AddMonomer(xyz, names, "he", is_local, anchor);
+	ptr_mbx_full->AddMolecule(molec);
+	
+	mbx_num_atoms_full++;
+	
+      }else if(strcmp("ow",mol_names[mtype]) == 0) {
+
+	// add helium atom
+	
+	tagint anchor = tag_full[i];
+	names.push_back("O");
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
+	
+	molec.push_back(nm++);
+	
+	ptr_mbx_full->AddMonomer(xyz, names, "ow", is_local, anchor);
 	ptr_mbx_full->AddMolecule(molec);
 	
 	mbx_num_atoms_full++;
@@ -1510,6 +1537,7 @@ void FixMBX::mbx_update_xyz()
       else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("ow",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
       else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
       else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
@@ -1628,6 +1656,7 @@ void FixMBX::mbx_update_xyz_local()
       else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("ow",mol_names[mtype])  == 0) na = 1;
       else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
       else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
       else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
@@ -1753,6 +1782,7 @@ void FixMBX::mbx_update_xyz_full()
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("ow",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
       else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
 	
