@@ -579,7 +579,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	for(int j = 0; j <  n_max_i; j++)
 	  islsum += is_local[mon_index[subgraphs[i][j]-1]];
 	
-	if ((!use_ghost && islsum == n_max_i)||(use_ghost && islsum > 0) )
+	if ((!use_ghost && islsum == n_max_i)||(use_ghost && islsum > 0 && islsum < n_max_i) )
 	  {
 
 	    std::sort(std::begin(subgraphs[i]), std::end(subgraphs[i]));
