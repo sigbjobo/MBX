@@ -385,6 +385,12 @@ class System {
      */
     std::vector<std::vector<std::string> > Get4bIgnorePoly();
 
+     /**
+     * Gets the boolian value of wheter to use electrostatics or not.
+     * @return bool.
+     */
+    bool GetUseElec();
+
     /**
      * Gets the virial tensor
      * @return A vector of doubles of 9 elements with the virial
@@ -611,6 +617,12 @@ class System {
      * @param[in] ignore_4b Vector of string vectors with the trimers to be ignored
      */
     void Set4bIgnorePoly(std::vector<std::vector<std::string> > ignore_4b);
+
+    /**
+     * Sets useElec on or off.
+     * @param[in] bool useElec.
+     */
+    void SetUseElec(bool useElec_);
 
     /**
      * Initializes the system once the monomer information is inputed. The
@@ -1171,7 +1183,7 @@ class System {
      */
     double GetLennardJonesPME(bool do_grads, bool use_ghost = 0);
     double GetLennardJonesPMElocal(bool do_grads, bool use_ghost = 0);
-
+ 
     /**
      * Private function to internally get the dispersion energy.
      * Gradients of the system will be updated.
@@ -1579,6 +1591,11 @@ class System {
      * when calculating the 4b polynomials.
      */
     std::vector<std::vector<std::string> > ignore_4b_poly_;
+
+    /**
+     * This bool turns on and off electrostatics in MBX.
+     */
+    bool useElec;
 
     
     /**
