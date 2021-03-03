@@ -57,6 +57,8 @@ class PairMBX : public Pair {
   double mbx_e1b;
   double mbx_e2b;
   double mbx_e3b;
+  double mbx_e4b;
+
   double mbx_disp;
   double mbx_buck;
   double mbx_ele;

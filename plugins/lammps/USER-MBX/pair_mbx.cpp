@@ -187,12 +187,12 @@ void PairMBX::compute(int eflag, int vflag)
 #endif
   
     fix_mbx->mbxt_start(MBXT_E4B_LOCAL);
-    mbx_e4b_local = ptr_mbx->FourEnergy(true);
+    mbx_e4b_local = ptr_mbx->NBodyEnergy(true,4);
     fix_mbx->mbxt_stop(MBXT_E4B_LOCAL);
     accumulate_f();
     
     fix_mbx->mbxt_start(MBXT_E4B_GHOST);
-    mbx_e4b_ghost = ptr_mbx->FourBodyEnergy(true, true);
+    mbx_e4b_ghost = ptr_mbx->NBodyEnergy(true, 4, true);
     fix_mbx->mbxt_stop(MBXT_E4B_GHOST);
     accumulate_f();
     
@@ -250,32 +250,35 @@ void PairMBX::compute(int eflag, int vflag)
 
   mbx_disp = mbx_disp_real + mbx_disp_pme;
   
-  if(mbx_parallel) {
+  if(ptr_mbx_local->GetUseElec()){
+    if(mbx_parallel) {
   
 #ifdef _DEBUG
-    printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
+      printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
 #endif
   
-    fix_mbx->mbxt_start(MBXT_ELE);
-    mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
-    fix_mbx->mbxt_stop(MBXT_ELE);
-    accumulate_f_local();
+      fix_mbx->mbxt_start(MBXT_ELE);
+      mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+      fix_mbx->mbxt_stop(MBXT_ELE);
+      accumulate_f_local();
     
-  } else {
+    } else {
     
 #ifdef _DEBUG
-    printf("[MBX] (%i) -- Computing electrostatics serial\n",me);
+      printf("[MBX] (%i) -- Computing electrostatics serial\n",me);
 #endif
     
-    // compute energy+gradients in serial on rank 0 for full system
+      // compute energy+gradients in serial on rank 0 for full system
     
-    fix_mbx->mbxt_start(MBXT_ELE);
-    if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
-    fix_mbx->mbxt_stop(MBXT_ELE);
-    accumulate_f_full();
+      fix_mbx->mbxt_start(MBXT_ELE);
+      if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
+      fix_mbx->mbxt_stop(MBXT_ELE);
+      accumulate_f_full();
     
+    }
   }
-  
+  else
+    mbx_ele=0.0;
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b  + mbx_e4b + mbx_ele;
 
   for(int i=0; i<6; ++i) virial[i] += mbx_virial[i];
