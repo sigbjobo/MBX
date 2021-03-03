@@ -545,6 +545,8 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     }
   
 
+
+    
 #ifdef Debug
     std::cout<<iend-istart<<" "<<nmon<<" "<<nmon2<<std::endl;
     for(int i = 0; i < nmon2; i++) 
@@ -563,7 +565,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     SubGraphs B(nmon2, n_max_i, neighborList, iend-istart);
     B.Enumerate();
     std::vector<std::vector<int>> subgraphs = B.GetSubgraphs();
-    //B.SubGraphs::~SubGraphs();
+    
 
 #ifdef Debug
       std::cout<<"Number of subgraphs with size "<< n_max_i<<": "<<subgraphs.size()<<endl;
@@ -604,6 +606,16 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	      }
 	  }
       }
+
+      	
+      
+      // Deallocate arrays and vectors
+      for(int i = 0; i < nmon2; i++){ 
+	delete[] neighborList[i];
+      }
+      delete[] neighborList;
+
+
       //    }
     //size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
     // is_local[mon_index[ret_matches[k].first]] + is_local[mon_index[ret_matches[l].first]];
