@@ -17,6 +17,7 @@ class SubGraphs
   unsigned int **childSet;
   unsigned int **Index;  
   int** neighborlist;
+
   long long subgraphCounter; 
   //Graph *g;
   long num;  
@@ -29,21 +30,21 @@ class SubGraphs
   
  public:
   SubGraphs(int nVert, int subgraphSize, int** neighborlist, int nVertStop);
-  
-  ~SubGraphs(){
-    for(int i = 0; i < subgraphSize; i++) {
-      delete [] Index[i];
-      delete [] childSet[i];
-    }
+  ~SubGraphs();
+  /* ~SubGraphs(){ */
+  /*   for(int i = 0; i < subgraphSize; i++) { */
+  /*     delete [] Index[i]; */
+  /*     delete [] childSet[i]; */
+  /*   } */
 	
-    for (int i = 0; i < subgraphSize; i++)
-      delete [] this->subgraph[i];
+  /*   for (int i = 0; i < subgraphSize; i++) */
+  /*     delete [] this->subgraph[i]; */
   
-    delete [] this->subgraph;
-    delete [] Index;
-    delete [] childSet;
-    delete [] this->Visited;   
-  };
+  /*   delete [] this->subgraph; */
+  /*   delete [] Index; */
+  /*   delete [] childSet; */
+  /*   delete [] this->Visited;    */
+  /* }; */
   bool ReadData(const char *path);
   std::vector<std::vector<int>> GetSubgraphs(){return k_subgraphs;};
   void Explore(int root, int level, int reminder);
