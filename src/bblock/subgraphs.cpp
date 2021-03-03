@@ -23,7 +23,8 @@ SubGraphs::SubGraphs(int nVert, int subgraphSize, int** neighborlist, int nVertS
   this->neighborlist = new int*[this->nVert];
   for(int i = 0; i < this->nVert; i++){ 
     this->neighborlist[i] = new int[neighborlist[i][0]+1];
-    this->neighborlist[i]   = neighborlist[i];
+    for(int j = 0;j < neighborlist[i][0]+1; j++)
+      this->neighborlist[i][j] = neighborlist[i][j];
   }
   
   this->maxDegree=-1;
@@ -46,27 +47,25 @@ SubGraphs::SubGraphs(int nVert, int subgraphSize, int** neighborlist, int nVertS
 
 }
 
-// SubGraphs::~SubGraphs(void)
-// {
-
-//   for(int i = 0; i < this->nVert; i++){ 
-//     delete [] this->neighborlist[i];
-//   }
-
-//   //for(int i = 0; i < this->; i++){ 
+SubGraphs::~SubGraphs()
+{
   
-//   for(i = 0; i < this->subgraphSize; i++) {
-//     delete [] this->Index[i];
-//     delete [] this->childSet[i];
-//     delete [] this->subgraph[i];
+  for(int i = 0; i < this->subgraphSize; i++) {
+    delete [] this->Index[i];
+    delete [] this->childSet[i];
+    delete [] this->subgraph[i];
+  }
+  delete [] this->subgraph;
+  delete [] this->Index;
+  delete [] this->childSet;
+  delete [] this->Visited;
 
-//   }
-//   delete [] this->neighborlist;
-//   delete [] this->subgraph;
-//   delete [] this->Index;
-//   delete [] this->childSet;
-//   delete [] this->Visited;
-// }
+  for(int i = 0; i < this->nVert; i++){ 
+    delete[] this->neighborlist[i];
+  }
+  delete[] this->neighborlist;
+
+}
 
 
 // SubGraphs::~SubGraphs()
