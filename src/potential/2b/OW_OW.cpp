@@ -28,8 +28,8 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "potential/2b/OW_OW.h"
-#include "potential/fragmented/FitFuncs.h"
+#include "OW_OW.h"
+#include "FitFuncs.cpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -51,7 +51,7 @@ OW_OW::OW_OW(const std::string mon0, const std::string mon1) {
         }
     }
 
-    std::string param_file = "OW_OW.params";
+    std::string param_file = "fits/5543_unfiltered/fit1/OW_OW.params";
 
     // parse nl params and coefficients
 
@@ -132,6 +132,7 @@ double OW_OW::eval(const double* xyz0, const double* xyz1, const size_t ndim) co
             }
         }
   
+
         energies.push_back(poly->eval(distances) * poly->eval_switch(distances));
 
     }

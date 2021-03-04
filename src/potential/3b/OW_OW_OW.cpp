@@ -28,9 +28,9 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "potential/3b/OW_OW_OW.h"
-#include "potential/fragmented/FitFuncs.h"
- 
+#include "OW_OW_OW.h"
+#include "FitFuncs.cpp"
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace OW_OW_OW_namespace {
@@ -51,7 +51,7 @@ OW_OW_OW::OW_OW_OW(const std::string mon0, const std::string mon1, const std::st
         }
     }
 
-    std::string param_file = "OW_OW_OW.params";
+    std::string param_file = "fits/5543_unfiltered/fit1/OW_OW_OW.params";
 
     // parse nl params and coefficients
 
