@@ -31,18 +31,18 @@ double Polynomial::eval_switch(const std::vector<double>& distances) const {
   double m_ri, m_ro;
   if(1 == distances.size())
     {
-      m_ri = 7.0;
-      m_ro = 10.0;
+      m_ri = 6.0;
+      m_ro = 8.0;
     }
   else if(3 == distances.size())
     {
-      m_ri = 3.5;
-      m_ro = 5.5;
+      m_ri = 2.5;
+      m_ro = 4.5;
     }
   else
     {
-      m_ri = 4.5;
-      m_ro = 6.5;
+      m_ri = 2.5;
+      m_ro = 4.5;
     }
   
   std::vector<double> tcs(distances.size());
@@ -70,7 +70,7 @@ double Polynomial::eval_switch(const std::vector<double>& distances) const {
     {
       return tcs[0]*tcs[1]+tcs[0]*tcs[2]+tcs[1]*tcs[2];
     }
-  else
+  else if (6 == distances.size()) 
     {
        return tcs[0]*tcs[1]*tcs[2]*tcs[3]*tcs[4]*tcs[5];
     }
@@ -239,34 +239,34 @@ std::vector<double> Polynomial::switch_gradient(const std::vector<double>& dista
   double m_ri, m_ro;
   if(1 == distances.size())
     {
-      m_ri = 7.0;
-      m_ro = 10.0;
+      m_ri = 6.0;
+      m_ro = 8.0;
     }
   else if(3 == distances.size())
     {
-      m_ri = 3.5;
-      m_ro = 5.5;
+      m_ri = 2.5;
+      m_ro = 4.5;
     }
   else
     {
-      m_ri = 4.5;
-      m_ro = 6.5;
-     }
+      m_ri = 2.5;
+      m_ro = 4.5;
+    }
   
   for(int i = 0; i < distances.size(); i++) {
     double r = distances[i];
     if (r > m_ro) {
-        gradients[0] = 0;
-	tcs[i]= 0.0;
+      gradients[i] = 0;
+      tcs[i]= 0.0;
     } else if (r > m_ri) {
-        const double t1 = M_PI/(m_ro - m_ri);
-        const double x = (r - m_ri)*t1;
-        gradients[0] = -M_PI*std::sin(x)/(2.0*(m_ro - m_ri));
-	tcs[i]=(1.0 + std::cos(x))/2.0;
+      const double t1 = M_PI/(m_ro - m_ri);
+      const double x = (r - m_ri)*t1;
+      gradients[i] = -M_PI*std::sin(x)/(2.0*(m_ro - m_ri));
+      tcs[i]=(1.0 + std::cos(x))/2.0;
 
     } else {
-        gradients[0] = 0;
-	tcs[i]=1.0;
+      gradients[i] = 0;
+      tcs[i]=1.0;
     }
   }
 
@@ -276,17 +276,16 @@ std::vector<double> Polynomial::switch_gradient(const std::vector<double>& dista
       gradients[1]=gradients[1]*(tcs[0]+tcs[2]);
       gradients[2]=gradients[2]*(tcs[0]+tcs[1]);
     }
-  else if(3 == distances.size())
+  else if (6 == distances.size()) 
     {
       gradients[0]=gradients[0]*(tcs[1]*tcs[2]*tcs[3]*tcs[4]*tcs[5]);
       gradients[1]=gradients[1]*(tcs[0]*tcs[2]*tcs[3]*tcs[4]*tcs[5]);
       gradients[2]=gradients[2]*(tcs[1]*tcs[0]*tcs[3]*tcs[4]*tcs[5]);
       gradients[3]=gradients[3]*(tcs[1]*tcs[2]*tcs[0]*tcs[4]*tcs[5]);
       gradients[4]=gradients[4]*(tcs[1]*tcs[2]*tcs[3]*tcs[0]*tcs[5]);
-      gradients[5]=gradients[5]*(tcs[1]*tcs[0]*tcs[3]*tcs[4]*tcs[0]);
-   
+      gradients[5]=gradients[5]*(tcs[1]*tcs[2]*tcs[3]*tcs[4]*tcs[0]);   
     }
-
+  
   return gradients;
 }
 
