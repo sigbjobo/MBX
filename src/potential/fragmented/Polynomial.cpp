@@ -15,15 +15,15 @@ std::vector<double> Polynomial::eval_terms(const std::vector<double>& distances)
 }
 
 std::vector<double> Polynomial::eval_variables(const std::vector<double>& distances) const {
-	std::vector<double> variables;
+  std::vector<double> variables(this->nl_param_indices.size());//(this->nl_param_indices.size());
 
 
-	// TODO: add support for other nl_param models. For now this is the exp model.
-	for(int nl_param_index = 0; nl_param_index < this->nl_param_indices.size(); nl_param_index++) {
-		variables.push_back(exp(-this->nl_params[this->nl_param_indices[nl_param_index]] * distances[nl_param_index]));
-	}
+  // TODO: add support for other nl_param models. For now this is the exp model.
+  for(int nl_param_index = 0; nl_param_index < this->nl_param_indices.size(); nl_param_index++) {
+    variables[nl_param_index]=(exp(-this->nl_params[this->nl_param_indices[nl_param_index]] * distances[nl_param_index]));
+  }
 
-	return variables;
+  return variables;
 }
 
 double Polynomial::eval_switch(const std::vector<double>& distances) const {
@@ -102,98 +102,102 @@ double Polynomial::eval(const std::vector<double>& distances) const {
 	return sum;
 }
 
-std::vector<double> Polynomial::gradient(const std::vector<double>& coords, std::vector<double> virial) const {
+std::vector<double> Polynomial::gradient(const std::vector<double>& coords, std::vector<double> &virial) const {
 
-    std::vector<double> distances;
+  std::vector<double> distances;//(coords.size()*(coords.size()-1)/18);
+
+  
+  for(int atom_index1 = 0; atom_index1 < coords.size() / 3; atom_index1++) {
+    for(int atom_index2 = atom_index1 + 1; atom_index2 < coords.size() / 3; atom_index2++) {
+	  
+      double x1 = coords[3*atom_index1];
+      double y1 = coords[3*atom_index1 + 1];
+      double z1 = coords[3*atom_index1 + 2];
+      double x2 = coords[3*atom_index2];
+      double y2 = coords[3*atom_index2 + 1];
+      double z2 = coords[3*atom_index2 + 2];
+      distances.push_back(std::sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)) + ((z1 - z2) * (z1 - z2))));
+      
+    }
+  }
+
+  // double** distance_gradients[distances.size()][coords.size()];
+  double** distance_gradients = new double* [distances.size()];
+  for(int i = 0; i < distances.size(); i++) {
+    distance_gradients[i] = new double[coords.size()];
+    for(int k = 0; k < coords.size(); k++) {
+      distance_gradients[i][k] = 0;
+    }
+  }
+  int distance_index = 0;
+  for(int atom_index1 = 0; atom_index1 < coords.size() / 3; atom_index1++) {
+    for(int atom_index2 = atom_index1 + 1; atom_index2 < coords.size() / 3; atom_index2++) {
+      double x1 = coords[3*atom_index1];
+      double y1 = coords[3*atom_index1 + 1];
+      double z1 = coords[3*atom_index1 + 2];
+      double x2 = coords[3*atom_index2];
+      double y2 = coords[3*atom_index2 + 1];
+      double z2 = coords[3*atom_index2 + 2];
+      distance_gradients[distance_index][atom_index1*3] = (x1-x2)/distances[distance_index];
+      distance_gradients[distance_index][atom_index1*3 + 1] = (y1-y2)/distances[distance_index];
+      distance_gradients[distance_index][atom_index1*3 + 2] = (z1-z2)/distances[distance_index];
+      distance_gradients[distance_index][atom_index2*3] = (x2-x1)/distances[distance_index];
+      distance_gradients[distance_index][atom_index2*3 + 1] = (y2-y1)/distances[distance_index];
+      distance_gradients[distance_index][atom_index2*3 + 2] = (z2-z1)/distances[distance_index];
+      distance_index++;
+    }
+  }
+
+   
+  // Form of the gradient:
+  // dsw*V/dx = dsw/da * da/dr * dr/dx * V + sw * dV/dv * dv/dr * dr/dx
     
-    for(int atom_index1 = 0; atom_index1 < coords.size() / 3; atom_index1++) {
-        for(int atom_index2 = atom_index1 + 1; atom_index2 < coords.size() / 3; atom_index2++) {
-            double x1 = coords[3*atom_index1];
-            double y1 = coords[3*atom_index1 + 1];
-            double z1 = coords[3*atom_index1 + 2];
-            double x2 = coords[3*atom_index2];
-            double y2 = coords[3*atom_index2 + 1];
-            double z2 = coords[3*atom_index2 + 2];
-            distances.push_back(std::sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)) + ((z1 - z2) * (z1 - z2))));
-        }
+  // dsw/da * da/dr
+  std::vector<double> switch_gradients = this->switch_gradient(distances);
+
+  //dr/dx
+  // 1 / distances
+    
+  // V
+  double energy = this->eval(distances);
+
+  // sw
+  double sw = this->eval_switch(distances);
+
+  // dV/dv
+  std::vector<double> V_gradients = this->polynomial_gradient(this->eval_variables(distances));
+
+  // dv/dr
+  std::vector<double> variable_gradients = this->variable_gradient(distances);
+
+  // dsw*v/dx
+  std::vector<double> gradients(coords.size());
+
+  for(int i = 0; i < coords.size(); i++) {
+    double grad1 = 0;
+    for(int k = 0; k < distances.size(); k++) {
+      grad1 += switch_gradients[k] * distance_gradients[k][i];
     }
 
-    double** distance_gradients = new double* [distances.size()];
-    for(int i = 0; i < distances.size(); i++) {
-        distance_gradients[i] = new double[coords.size()];
-        for(int k = 0; k < coords.size(); k++) {
-            distance_gradients[i][k] = 0;
-        }
+    double grad2 = 0;
+    for(int k = 0; k < distances.size(); k++) {
+      grad2 += V_gradients[k] * variable_gradients[k] * distance_gradients[k][i];
     }
-    int distance_index = 0;
-    for(int atom_index1 = 0; atom_index1 < coords.size() / 3; atom_index1++) {
-        for(int atom_index2 = atom_index1 + 1; atom_index2 < coords.size() / 3; atom_index2++) {
-            double x1 = coords[3*atom_index1];
-            double y1 = coords[3*atom_index1 + 1];
-            double z1 = coords[3*atom_index1 + 2];
-            double x2 = coords[3*atom_index2];
-            double y2 = coords[3*atom_index2 + 1];
-            double z2 = coords[3*atom_index2 + 2];
-            distance_gradients[distance_index][atom_index1*3] = (x1-x2)/distances[distance_index];
-            distance_gradients[distance_index][atom_index1*3 + 1] = (y1-y2)/distances[distance_index];
-            distance_gradients[distance_index][atom_index1*3 + 2] = (z1-z2)/distances[distance_index];
-            distance_gradients[distance_index][atom_index2*3] = (x2-x1)/distances[distance_index];
-            distance_gradients[distance_index][atom_index2*3 + 1] = (y2-y1)/distances[distance_index];
-            distance_gradients[distance_index][atom_index2*3 + 2] = (z2-z1)/distances[distance_index];
-            distance_index++;
-        }
-    }
-    
-
-    // Form of the gradient:
-    // dsw*V/dx = dsw/da * da/dr * dr/dx * V + sw * dV/dv * dv/dr * dr/dx
-    
-    // dsw/da * da/dr
-    std::vector<double> switch_gradients = this->switch_gradient(distances);
-
-    //dr/dx
-    // 1 / distances
-    
-    // V
-    double energy = this->eval(distances);
-
-    // sw
-    double sw = this->eval_switch(distances);
-
-    // dV/dv
-    std::vector<double> V_gradients = this->polynomial_gradient(this->eval_variables(distances));
-
-    // dv/dr
-    std::vector<double> variable_gradients = this->variable_gradient(distances);
-
-    // dsw*v/dx
-    std::vector<double> gradients(coords.size());
-
-    for(int i = 0; i < coords.size(); i++) {
-        double grad1 = 0;
-        for(int k = 0; k < distances.size(); k++) {
-            grad1 += switch_gradients[k] * distance_gradients[k][i];
-        }
-
-        double grad2 = 0;
-        for(int k = 0; k < distances.size(); k++) {
-            grad2 += V_gradients[k] * variable_gradients[k] * distance_gradients[k][i];
-        }
         
 
-        double grad = grad1*energy + sw*grad2;
+    double grad = grad1*energy + sw*grad2;
 
-        gradients[i] = grad;
-    }
+    gradients[i] = grad;
+  }
 
     // calculate the virial
 
-    virial[0] = 0;
-    virial[1] = 0;
-    virial[2] = 0;
-    virial[4] = 0;
-    virial[5] = 0;
-    virial[8] = 0;
+    // virial[0] = 0;
+    // virial[1] = 0;
+    // virial[2] = 0;
+    // virial[4] = 0;
+    // virial[5] = 0;
+    // virial[8] = 0;
     for(int i = 0; i < coords.size() / 3; i++) {
 
         virial[0] -= coords[i*3 + 0] * gradients[i*3 + 0]; // x*2 component
@@ -221,7 +225,7 @@ std::vector<double> Polynomial::gradient(const std::vector<double>& coords, std:
 }
 
 std::vector<double> Polynomial::variable_gradient(const std::vector<double>& distances) const {
-	std::vector<double> gradients;
+  std::vector<double> gradients;
 
 
 	// TODO: add support for other nl_param models. For now this is the exp model.
