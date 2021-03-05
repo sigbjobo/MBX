@@ -1814,7 +1814,7 @@ double System::Energy(bool do_grads) {
 
     // double e3b = 0.0;
    
-    double e3b = Get3B(do_grads);
+    double e3b =   Get3B(do_grads);
 
 #ifdef TIMING
     auto t4 = std::chrono::high_resolution_clock::now();
@@ -1830,7 +1830,8 @@ double System::Energy(bool do_grads) {
     auto t5 = std::chrono::high_resolution_clock::now();
 #endif
 
-    double e4b = GetNB(do_grads, 4);
+    double e4b =0;
+    e4b = GetNB(do_grads, 4);
 
 #ifdef TIMING
     auto t6 = std::chrono::high_resolution_clock::now();
@@ -2564,8 +2565,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 			grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 2]] + j] +=
 			  grad3[k * 3 * nat_[trimers[i0 + 3 * k + 2]] + j];
 		      }
-                        }
-                        // Virial Tensor
+		    
+		    }
+		    // Virial Tensor
                         for (size_t j = 0; j < 9; j++) {
                             virial_pool[rank][j] += escale * virial[j];
                         }
@@ -2943,20 +2945,21 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 	      // Update gradients
 	      size_t i0 = nt_tot * N;
 	      for (size_t k = 0; k < nt; k++) {
-		// Monomer 1
-
+		
+		// For each monomer
 		for (int l = 0; l < N; l++){
 		  for (size_t j = 0; j < 3 * nat_[nmers[i0 + N * k]]; j++) {
-		    grad_pool[rank][3 * first_index_[nmers[i0 + N * k]] + j] +=
-		      grad_vec[l][k * 3 * nat_[nmers[i0 + N * k]] + j];
+		    grad_pool[rank][3 * first_index_[nmers[i0 + N * k + l]] + j] +=
+		      grad_vec[l][k * 3 * nat_[nmers[i0 + N * k + l]] + j]; 
 		  }
 		}
-	      }                        // Virial Tensor
+		
+	      }
+	      // Virial Tensor
 	      for (size_t j = 0; j < 9; j++) {
 		virial_pool[rank][j] += escale * virial[j];
 	      }
-	    
-	
+ 
 	    } else {
 	      // POLYNOMIALS
 	      double e;
@@ -2967,8 +2970,6 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 	      if(N==4)
 		e = e4b::get_4b_energy(m_vec[0], m_vec[1], m_vec[2], m_vec[3], nt, xyz_vec[0], xyz_vec[1], xyz_vec[2],xyz_vec[3]);
 
-	      //	      std::cout<<"energy: "<<e<<std::endl;
-	
 	      enb_pool[rank] += escale * e;
 	    }
 	  }
