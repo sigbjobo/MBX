@@ -43,7 +43,7 @@ class Polynomial
         */
         double eval(const std::vector<double>& distances) const;
 
-        std::vector<double> gradient(const std::vector<double>& coords, std::vector<double> virial) const;
+        std::vector<double> gradient(const std::vector<double>& coords, std::vector<double> &virial) const;
 
         virtual std::vector<double> polynomial_gradient(const std::vector<double>& variables) const = 0;
         
