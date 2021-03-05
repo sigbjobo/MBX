@@ -2948,7 +2948,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 		
 		// For each monomer
 		for (int l = 0; l < N; l++){
-		  for (size_t j = 0; j < 3 * nat_[nmers[i0 + N * k]]; j++) {
+		  for (size_t j = 0; j < 3 * nat_[nmers[i0 + N * k + l]]; j++) {
 		    grad_pool[rank][3 * first_index_[nmers[i0 + N * k + l]] + j] +=
 		      grad_vec[l][k * 3 * nat_[nmers[i0 + N * k + l]] + j]; 
 		  }
