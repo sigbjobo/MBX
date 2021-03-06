@@ -451,6 +451,13 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
     if (!use_ghost && !is_local[istart]) return;
 
+
+     
+
+    
+
+
+    
     // Obtain xyz vector with the positions of first atom of each monomer
     std::vector<double> xyz;
     size_t nmon2 = 0;
@@ -499,14 +506,68 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     if (n_max > 2 && nmon2 < 3) return;
     if (n_max > 3 && nmon2 < 4) return;
 
- 
+    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                kdtutils::PointCloud<double>, 3 /* dim */>
+      my_kd_tree_t;
+
+    
+    // Remove positions outside maximum nmer distance (linear)
+    kdtutils::PointCloud<double> ptc2 = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
+
+  
+    my_kd_tree_t index2(3 /*dim*/, ptc2, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+    index2.buildIndex();
+
+    set<int, less<int> > s1;
+    for (size_t i = 0; i < iend-istart; i++) {
+      double point[3];
+      point[0] = ptc2.pts[i].x;
+      point[1] = ptc2.pts[i].y;
+      point[2] = ptc2.pts[i].z;
+      std::vector<std::pair<size_t, double>> ret_matches;
+      nanoflann::SearchParams params;
+      const size_t nMatches = index2.radiusSearch(point, (n_max-1)*(n_max-1)*cutoff*cutoff, ret_matches, params);
+
+      for (size_t j = 0; j < nMatches; j++) {
+    	size_t pos = ret_matches[j].first / nmon2;
+    	ret_matches[j].first -= nmon2 * pos;
+    	s1.insert(ret_matches[j].first);
+      }
+    }
+    
+    nmon2=s1.size();
+    if (nmon2 < 2) return;
+    if (n_max > 2 && nmon2 < 3) return;
+    if (n_max > 3 && nmon2 < 4) return;
+    
+    std::vector<size_t> mon_index2;
+    mon_index2.reserve(nmon2);
+    std::vector<double> xyz2;
+    xyz2.reserve(nmon2*3);
+   
+    for (int i : s1)
+      {
+	xyz2.push_back(xyz[i*3]);
+    	xyz2.push_back(xyz[i*3+1]);
+    	xyz2.push_back(xyz[i*3+2]);
+    	mon_index2.push_back(mon_index[i]);
+      }
+    xyz.clear();
+    mon_index.clear();
+    xyz=xyz2;
+    mon_index=mon_index2;  
+
+   
+    
+
+    
     // Obtain the data in the structure needed by the kd-tree
     kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
 
     // Build the tree
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                kdtutils::PointCloud<double>, 3 /* dim */>
-      my_kd_tree_t;
+    // typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+    //                                             kdtutils::PointCloud<double>, 3 /* dim */>
+    //   my_kd_tree_t;
     my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
     index.buildIndex();
 
