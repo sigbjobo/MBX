@@ -1,0 +1,37 @@
+{
+   "Note" : "This is a cofiguration file",
+   "MBX" : { 
+       "box" : [],
+       "twobody_cutoff"   : 10.0,
+       "threebody_cutoff"  : 7.0,
+       "fourbody_cutoff"  : 7.0,
+       "max_n_eval_1b"    : 500,
+       "max_n_eval_2b"    : 500,
+       "max_n_eval_3b"    : 500,
+       "max_n_eval_4b"    : 500,
+       "use_elec"         : false,
+       "dipole_tolerance" : 1E-4,
+       "dipole_max_it"    : 10,
+       "dipole_method"     : "cg",
+       "alpha_ewald_elec" : 0.6,
+       "grid_density_elec" : 2.5,
+       "spline_order_elec" : 6,
+       "alpha_ewald_disp" : 0.6, 
+       "grid_density_disp" : 2.5,
+       "spline_order_disp" : 6,
+       "ff_mons"   : [],
+       "connectivity_file" : "", 
+       "monomers_file" : "OW.json", 
+       "ttm_pairs" : [],
+       "ignore_1b_poly" : [],
+       "ignore_2b_poly" : [],
+       "ignore_3b_poly" : [],
+       "ignore_4b_poly" : []
+   } ,  
+   "i-pi" : {
+       "port" : 34543,
+       "localhost" : "localhost"
+   }
+}
+
+
