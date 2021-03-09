@@ -2668,6 +2668,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
     // Variables needed for OMP
     size_t step = 1;
+    
     int num_threads = 1;
 
 #ifdef _OPENMP

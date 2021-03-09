@@ -30,7 +30,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/2b/OW_OW.h"
 #include "potential/fragmented/FitFuncs.h"
-
+ 
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace OW_OW_namespace {
@@ -132,6 +132,7 @@ double OW_OW::eval(const double* xyz0, const double* xyz1, const size_t ndim) co
             }
         }
   
+
         energies.push_back(poly->eval(distances) * poly->eval_switch(distances));
 
     }

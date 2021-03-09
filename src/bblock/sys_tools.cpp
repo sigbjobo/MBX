@@ -512,22 +512,26 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
     
     // Remove positions outside maximum nmer distance (linear)
-    kdtutils::PointCloud<double> ptc2 = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
+    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
 
   
-    my_kd_tree_t index2(3 /*dim*/, ptc2, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+    my_kd_tree_t index2(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
     index2.buildIndex();
 
     set<int, less<int> > s1;
     for (size_t i = 0; i < iend-istart; i++) {
       double point[3];
-      point[0] = ptc2.pts[i].x;
-      point[1] = ptc2.pts[i].y;
-      point[2] = ptc2.pts[i].z;
+      point[0] = ptc.pts[i].x;
+      point[1] = ptc.pts[i].y;
+      point[2] = ptc.pts[i].z;
       std::vector<std::pair<size_t, double>> ret_matches;
       nanoflann::SearchParams params;
-      const size_t nMatches = index2.radiusSearch(point, (n_max-1)*(n_max-1)*cutoff*cutoff, ret_matches, params);
-
+      size_t  nMatches;
+      if(n_max==4){
+	nMatches = index2.radiusSearch(point, (n_max-2)*(n_max-2)*cutoff*cutoff, ret_matches, params);
+      }else{
+	nMatches = index2.radiusSearch(point, (n_max-1)*(n_max-1)*cutoff*cutoff, ret_matches, params);
+      }
       for (size_t j = 0; j < nMatches; j++) {
     	size_t pos = ret_matches[j].first / nmon2;
     	ret_matches[j].first -= nmon2 * pos;
@@ -562,7 +566,7 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
     
     // Obtain the data in the structure needed by the kd-tree
-    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
+    ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
 
     // Build the tree
     // typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,

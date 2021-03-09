@@ -13,9 +13,9 @@
 
 #include "bblock/system.h"
 
-//#define NUMGRADS
+#define NUMGRADS
 //#define PRINT_GRADS
-//#define PRINT_VIRIAL
+#define PRINT_VIRIAL
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     std::cout << "Energy= " << en << std::endl;
 
     tools::WriteNrg("input_out.nrg", systems);
-
+ 
 #ifdef PRINT_GRADS
     {
         std::vector<std::string> atn = systems[0].GetAtomNames();
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 
 #ifdef PRINT_VIRIAL
     std::vector<double> virial = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    double E1b, E2b, E3b, Eelec, Edisp, Ebuck, Etotal;
+    double E1b, E2b, E3b, Eelec, Edisp, Ebuck, Etotal, E4b;
     E1b = systems[0].OneBodyEnergy(true);
     std::cout << " 1B Energy [kcal/mol] " << std::setprecision(15) << E1b << std::endl;
     virial = systems[0].GetVirial();
@@ -94,6 +94,13 @@ int main(int argc, char** argv) {
     std::cout << " 3B Virial [kcal/mol] " << virial[0] << " , " << virial[1] << " , " << virial[2] << " , " << virial[3]
               << " , " << virial[4] << " , " << virial[5] << " , " << virial[6] << " , " << virial[7] << " , "
               << virial[8] << std::endl;
+    E4b = systems[0].NBodyEnergy(true,4);
+    std::cout << " 4B Energy [kcal/mol] " << std::setprecision(15) << E4b << std::endl;
+    virial = systems[0].GetVirial();
+    std::cout << " 4B Virial [kcal/mol] " << virial[0] << " , " << virial[1] << " , " << virial[2] << " , " << virial[3]
+              << " , " << virial[4] << " , " << virial[5] << " , " << virial[6] << " , " << virial[7] << " , "
+              << virial[8] << std::endl;
+   
     Eelec = systems[0].Electrostatics(true);
     std::cout << " Elec Energy [kcal/mol] " << std::setprecision(15) << Eelec << std::endl;
     virial = systems[0].GetVirial();
@@ -136,7 +143,7 @@ int main(int argc, char** argv) {
     xyz = systems[0].GetRealXyz();
     real_grd = systems[0].GetRealGrads();
     std::vector<std::string> atms = systems[0].GetRealAtomNames();
-    const double eps = 1.0e-3;
+    const double eps = 1.0e-4;
 
     for (size_t j = 0; j < n_atoms * 3; j++) {
         const double x_orig = xyz[j];

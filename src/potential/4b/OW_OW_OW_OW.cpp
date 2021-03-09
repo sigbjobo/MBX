@@ -28,7 +28,7 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "OW_OW_OW_OW.h"
+#include "potential/4b/OW_OW_OW_OW.h"
 #include "potential/fragmented/FitFuncs.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ double OW_OW_OW_OW::eval(const double* xyz0, const double* xyz1, const double* x
         for(size_t i = 0; i < 1*3; i++)
             coords.push_back(xyz3[j*3*1 + i]);
 
-	
+
         std::vector<double> distances;
 
         for(int atom_index1 = 0; atom_index1 < coords.size() / 3; atom_index1++) {

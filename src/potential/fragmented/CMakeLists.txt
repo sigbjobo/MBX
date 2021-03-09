@@ -1,4 +1,4 @@
-set(FRAGMENTED_SOURCES AtomId.cpp LocalSystem.cpp ConnectivityMatrix.cpp FitFuncs_OW.cpp  Polynomial.cpp
+set(FRAGMENTED_SOURCES AtomId.cpp LocalSystem.cpp ConnectivityMatrix.cpp FitFuncs_OW.cpp  Polynomial.cpp  CoarseGrainSwitch.cpp NoSwitchFunction.cpp
 # BEGIN SECTION CMAKELISTS
                  
 # END SECTION CMAKELISTS
