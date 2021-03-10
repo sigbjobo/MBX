@@ -59,7 +59,7 @@ double Polynomial::eval(const std::vector<double>& distances) const {
 	return sum;
 }
 
-std::vector<double> Polynomial::gradient(const std::vector<double>& coords, std::vector<double> virial) const {
+std::vector<double> Polynomial::gradient(const std::vector<double>& coords, std::vector<double>& virial) const {
 
     std::vector<double> distances;
     
