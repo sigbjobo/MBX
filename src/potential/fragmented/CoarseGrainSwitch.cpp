@@ -27,7 +27,7 @@ class CoarseGrainSwitch: public SwitchFunction {
 	    std::vector<double> tc(distances.size());
 	    for (std::size_t i = 0; i < distances.size(); i++)
 	      tc[i] = this->single_switch(distances[i]);
-	    double result =  this->Combination_Prod_Sum(tc,this->nb-1);
+	    double result =  this->combination_prod_sum(tc,this->nb-1);
 	    //double result = this->eval_helper(distances, 0, 0);
             //std::cout << std::endl;
             return result;
@@ -151,7 +151,7 @@ class CoarseGrainSwitch: public SwitchFunction {
 	std::vector<double> v_switch_i(v);
 	v_switch_i.erase(v_switch_i.begin()+i);
 	
-	grad_ret.push_back(Combination_Prod_Sum(v_switch_i, count-1)*grad_v[i]);
+	grad_ret.push_back(combination_prod_sum(v_switch_i, count-1)*grad_v[i]);
       }
     return grad_ret;
   }
