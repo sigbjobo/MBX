@@ -4,14 +4,16 @@
 #include <iostream>
 
 #include "LocalSystem.h"
+#include "SwitchFunction.h"
 
 class Polynomial
 {
 
     public:
 
-        Polynomial(LocalSystem system, std::string name, int num_terms, int num_nl_params, std::vector<int> nl_param_indices);
+        Polynomial(LocalSystem system, std::string name, int num_terms, int num_nl_params, std::vector<int> nl_param_indices, SwitchFunction* switch_function);
 
+        ~Polynomial();
         /*
         *
         * Evaluate each term of the polynomial with the given atomic distances.
@@ -43,7 +45,7 @@ class Polynomial
         */
         double eval(const std::vector<double>& distances) const;
 
-        std::vector<double> gradient(const std::vector<double>& coords, std::vector<double> &virial) const;
+        std::vector<double> gradient(const std::vector<double>& coords, std::vector<double> virial) const;
 
         virtual std::vector<double> polynomial_gradient(const std::vector<double>& variables) const = 0;
         
@@ -87,13 +89,16 @@ class Polynomial
         std::string get_name() const;
 
         friend std::ostream& operator<<(std::ostream& os, const Polynomial& polynomial);
-
-    private:
+ 	int get_nb() const;
+	double get_ro() const;
+	
+   private:
 
         LocalSystem system;
         std::vector<double> nl_params;
         std::vector<int> nl_param_indices;
         std::vector<double> coefficients;
         std::string name;
+        SwitchFunction* switch_function;
 
 };
