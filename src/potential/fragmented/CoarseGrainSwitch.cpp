@@ -9,7 +9,8 @@ class CoarseGrainSwitch: public SwitchFunction {
 
     public:
 
-        CoarseGrainSwitch(int nb, double ri, double ro) : nb(nb), ri(ri), ro(ro) {
+
+  CoarseGrainSwitch(int nb, double ri, double ro) : nb(nb), ri(ri), ro(ro) {
             
         }
   
