@@ -97,5 +97,7 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
 double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial = 0);
 
+ const OW_OW_namespace::OW_OW pot_ow_ow("ow", "ow");
+
 }  // namespace e2b
 #endif

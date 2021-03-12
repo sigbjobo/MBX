@@ -105,8 +105,8 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 
     }
      else if (mon1 == "ow" and mon2 == "ow") {
-       OW_OW_namespace::OW_OW  pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+       //OW_OW_namespace::OW_OW  pot(mon1, mon2);
+        energy = pot_ow_ow.eval(xyz1.data(), xyz2.data(), nm);
         // =====>> END SECTION 2B_NO_GRADIENT <<=====
 
     } else {
@@ -206,9 +206,10 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // =====>> END SECTION 2B_GRADIENT <<=====
     }
      else if (mon1 == "ow" and mon2 == "ow") {
-        OW_OW_namespace::OW_OW pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    }
+       //OW_OW_namespace::OW_OW pot(mon1, mon2);
+        energy = pot_ow_ow.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+	
+     }
     
  else {
         energy = 0.0;
