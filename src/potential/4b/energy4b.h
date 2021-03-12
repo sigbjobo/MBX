@@ -102,5 +102,6 @@ double get_4b_energy(std::string m1, std::string m2, std::string m3,  std::strin
                      std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> xyz4, std::vector<double> &grd1,
                      std::vector<double> &grd2, std::vector<double> &grd3, std::vector<double> &grd4, std::vector<double> *virial = 0);
 
+ const OW_OW_OW_OW_namespace::OW_OW_OW_OW pot_ow_ow_ow_ow("ow","ow","ow","ow");
 }  // namespace e4b
 #endif

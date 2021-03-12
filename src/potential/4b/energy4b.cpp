@@ -104,8 +104,8 @@ namespace e4b {
     double energy = 0.0;
 
     if (mon1 == "ow" and mon2 == "ow" and mon3 == "ow" and mon4 == "ow") {
-      OW_OW_OW_OW_namespace::OW_OW_OW_OW  pot(mon1, mon2, mon3, mon4);
-      energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), xyz4.data(), nm);
+      //OW_OW_OW_OW_namespace::OW_OW_OW_OW  pot(mon1, mon2, mon3, mon4);
+      energy = pot_ow_ow_ow_ow.eval(xyz1.data(), xyz2.data(), xyz3.data(), xyz4.data(), nm);
         // =====>> END SECTION 2B_NO_GRADIENT <<=====
     }
     else {
@@ -220,8 +220,8 @@ namespace e4b {
     double energy = 0.0;
     // Note: in the conditional, mon2 >= mon1 ALWAYS
     if (mon1 == "ow" and mon2 == "ow" and mon3 == "ow" and mon3 == "ow") {
-    OW_OW_OW_OW_namespace::OW_OW_OW_OW pot(mon1, mon2,mon3,mon4);
-    energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(),xyz4.data(), grad1.data(), grad2.data(), grad3.data(),grad4.data(), nm, virial);
+      //OW_OW_OW_OW_namespace::OW_OW_OW_OW pot(mon1, mon2,mon3,mon4);
+      energy = pot_ow_ow_ow_ow.eval(xyz1.data(), xyz2.data(), xyz3.data(),xyz4.data(), grad1.data(), grad2.data(), grad3.data(),grad4.data(), nm, virial);
     }
   else {
         energy = 0.0;
