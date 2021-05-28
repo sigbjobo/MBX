@@ -579,6 +579,129 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     neighborList = new int*[nmon2];
 
     //for(int i = 0; i < iend - istart; i++){
+
+    
+     
+// #ifdef Debug
+//     set<int, less <int> > visited;//Neighborlist already computed
+//     set<int, less <int> > query;//Query for the next body
+
+//     //Check for two body
+//     for(int i = 0; i < nmon; i++){
+//       double point[3];
+//       point[0] = ptc.pts[i].x;
+//       point[1] = ptc.pts[i].y;
+//       point[2] = ptc.pts[i].z;
+	 
+//       // Perform the search
+//       std::vector<std::pair<size_t, double>> ret_matches;
+//       nanoflann::SearchParams params;
+//       const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
+//       for (size_t j = 0; j < nMatches; j++) {
+// 	size_t pos = ret_matches[j].first / nmon2;
+// 	ret_matches[j].first -= nmon2 * pos;
+//       }
+      
+
+//       //Has to be reverse order for subgraph construction
+//       std::sort(ret_matches.rbegin(), ret_matches.rend(), ComparePair);
+       
+//       neighborList[i] = new int[nMatches];
+//       neighborList[i][0]=nMatches-1;
+
+//       size_t l=0;
+//       for (size_t j = 0; j < nMatches; j++) {
+// 	if (ret_matches[j].first != i){
+// 	  neighborList[i][l+1]   =  ret_matches[j].first+1;
+	  
+// 	  query.insert(ret_matches[j].first);
+// 	  l++;
+// 	}
+//       }
+//       visited.insert(i);	    
+//     }
+ 
+    
+//     for (int nbody=0;nbody<n_max-1;i++)
+//       {
+// 	set<int, less <int> > query_new;//Query for the next body
+// 	for (int i: query){
+// 	        visited.insert(i);
+//       double point[3];
+//       point[0] = ptc.pts[i].x;
+//       point[1] = ptc.pts[i].y;
+//       point[2] = ptc.pts[i].z;
+	 
+//       // Perform the search
+//       std::vector<std::pair<size_t, double>> ret_matches;
+//       nanoflann::SearchParams params;
+//       const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
+//       for (size_t j = 0; j < nMatches; j++) {
+// 	size_t pos = ret_matches[j].first / nmon2;
+// 	ret_matches[j].first -= nmon2 * pos;
+//       }
+      
+
+//       //Has to be reverse order for subgraph construction
+//       std::sort(ret_matches.rbegin(), ret_matches.rend(), ComparePair);
+       
+//       neighborList[i] = new int[nMatches];
+//       neighborList[i][0]=nMatches-1;
+
+//       size_t l=0;
+//       for (size_t j = 0; j < nMatches; j++) {
+// 	if (ret_matches[j].first != i){
+// 	  neighborList[i][l+1]   =  ret_matches[j].first+1;
+// 	  query.insert(ret_matches[j].first);
+// 	  l++;
+// 	}
+//       }
+
+
+// 	}
+ 	
+	
+// 	visited.insert(i);
+	      
+//       }
+    
+      
+//     for(int i = 0; i < nmon2; i++){ 
+//       double point[3];
+//       point[0] = ptc.pts[i].x;
+//       point[1] = ptc.pts[i].y;
+//       point[2] = ptc.pts[i].z;
+	 
+//       // Perform the search
+//       std::vector<std::pair<size_t, double>> ret_matches;
+//       nanoflann::SearchParams params;
+//       const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
+//       for (size_t j = 0; j < nMatches; j++) {
+// 	size_t pos = ret_matches[j].first / nmon2;
+// 	ret_matches[j].first -= nmon2 * pos;
+//       }
+
+//       //Has to be reverse order for subgraph construction
+//       std::sort(ret_matches.rbegin(), ret_matches.rend(), ComparePair);
+       
+//       neighborList[i] = new int[nMatches];
+//       neighborList[i][0]=nMatches-1;
+
+//       size_t l=0;
+//       for (size_t j = 0; j < nMatches; j++) {
+// 	if (ret_matches[j].first != i){
+// 	  neighborList[i][l+1]   =  ret_matches[j].first+1;
+// 	  l++;
+// 	}
+//       }
+      
+//     }
+// #endif
+   
+
+
+    
+    
     for(int i = 0; i < nmon2; i++){ 
       double point[3];
       point[0] = ptc.pts[i].x;
@@ -679,8 +802,346 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 	delete[] neighborList[i];
       }
       delete[] neighborList;
+ 
 
+      //    }
+    //size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
+    // is_local[mon_index[ret_matches[k].first]] + is_local[mon_index[ret_matches[l].first]];
+    
+      
+      
 
+    
+    // //    std::vector<size_t> idone;
+    // std::set<std::pair<size_t, size_t>> donej; //Set with only one unique instance of each element
+    // for (size_t i = 0; i < iend - istart; i++) {
+       
+    //   // Define the query point
+    //   // for first monomer
+    //   double point[3];
+    //   point[0] = ptc.pts[i].x;
+    //   point[1] = ptc.pts[i].y;
+    //   point[2] = ptc.pts[i].z;
+
+    //   // Perform the search
+    //   std::vector<std::pair<size_t, double>> ret_matches;
+    //   nanoflann::SearchParams params;
+    //   const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
+      
+    //   //fix indices
+    //   for (size_t j = 0; j < nMatches; j++) {
+    // 	size_t pos = ret_matches[j].first / nmon2;
+    // 	ret_matches[j].first -= nmon2 * pos;
+    //   }
+
+    //   std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
+    //   std::set<std::pair<size_t, size_t>> donek;
+      
+    //   std::set<std::tuple<size_t, size_t, size_t>> donel;//
+    //   // Add the pairs that are not in the dimer vector
+    //   for (size_t j = 0; j < nMatches; j++) {
+    // 	std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> retdim;
+	
+	
+    // 	if (ret_matches[j].first > i) {
+    // 	  //std::set<std::pair<size_t, size_t>> donel;// UNSURE, BEFORE OR AFTER LOOP?
+	  
+    // 	  // DIMER  
+    // 	  retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
+    // 	  if (retdim.second) {
+    // 	    // ghost == 0, local == 1
+    // 	    // ghost-ghost == 0
+    // 	    // ghost-local == 1 for all permutations
+    // 	    // local-local == 2
+
+    // 	    size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
+
+    // 	    bool include_dimer = false;
+    // 	    if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
+    // 	    if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
+
+    // 	    if (include_dimer) {
+    // 	      dimers.push_back(mon_index[i]);
+    // 	      dimers.push_back(mon_index[ret_matches[j].first]);
+    // 	    }
+    // 	  }// DIMER FINISHED
+
+    // 	  // Add trimers if requested
+    // 	  if (n_max > 2) { 
+	    
+
+    // 	    std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
+
+    // 	    std::pair<std::set<std::tuple<size_t, size_t,size_t>>::iterator, bool> ret2;
+
+	    
+    // 	    // Define query point, which is each of the points 'j' inside the
+    // 	    // radius of 'i'
+    // 	    double point2[3]; 
+    // 	    point2[0] = ptc.pts[ret_matches[j].first].x;
+    // 	    point2[1] = ptc.pts[ret_matches[j].first].y;
+    // 	    point2[2] = ptc.pts[ret_matches[j].first].z;
+    // 	    std::vector<std::pair<size_t, double>> ret_matches2;
+    // 	    nanoflann::SearchParams params2;
+    // 	    const size_t nMatches2 = index.radiusSearch(point2, cutoff * cutoff, ret_matches2, params2);
+
+    // 	    for (size_t k = 0; k < nMatches2; k++) {
+    // 	      size_t pos2 = ret_matches2[k].first / nmon2;
+    // 	      ret_matches2[k].first -= nmon2 * pos2;
+    // 	    }
+	      
+    // 	    std::sort(ret_matches2.begin(), ret_matches2.end(), ComparePair);
+
+    // 	    //loop k for neighbors of i
+    // 	    for (size_t k = 0; k < nMatches; k++) {
+    // 	      if (ret_matches[k].first > ret_matches[j].first) {
+		
+    // 		ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
+    // 		if (ret.second) {
+    // 		  // ghost == 0, local == 1
+    // 		  // ghost-ghost-ghost == 0
+    // 		  // ghost-ghost-local == 1 for all permutations
+    // 		  // ghost-local-local == 2 for all permutations
+    // 		  // local-local-local == 3
+    // 		  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
+    // 		    is_local[mon_index[ret_matches[k].first]];
+
+    // 		  bool include_trimer = false;
+    // 		  if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+    // 		  if (!use_ghost && islsum == 3) include_trimer = true;
+
+    // 		  if (include_trimer) {
+    // 		    trimers.push_back(mon_index[i]);
+    // 		    trimers.push_back(mon_index[ret_matches[j].first]);
+    // 		    trimers.push_back(mon_index[ret_matches[k].first]);
+    // 		  }
+
+    // 		  // Add tetramers if requested
+    // 		  if (n_max > 3) {
+		    
+    // 		    //loop including where l are neighbors i
+    // 		    for (size_t l = 0; l < nMatches; l++) {
+    // 		      if (ret_matches[l].first > ret_matches[k].first) {
+    // 			//ret = donel.insert(std::make_pair(ret_matches[k].first, ret_matches[l].first));
+    // 			ret2 = donel.insert(std::make_tuple(ret_matches[j].first,ret_matches[k].first, ret_matches[l].first));
+    // 			if (ret2.second) {
+    // 			  // ghost == 0, local == 1
+    // 			  // ghost-ghost-ghost == 0
+    // 			  // ghost-ghost-local == 1 for all permutations
+    // 			  // ghost-local-local == 2 for all permutations
+    // 			  // local-local-local == 3
+    // 			  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
+    // 			    is_local[mon_index[ret_matches[k].first]] + is_local[mon_index[ret_matches[l].first]];
+    // 			  bool include_tetramer = false;
+    // 			  if (use_ghost && (islsum > 0)) include_tetramer = true;
+    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+    // 			  if (include_tetramer) {
+    // 			    tetramers.push_back(mon_index[i]);
+    // 			    tetramers.push_back(mon_index[ret_matches[j].first]);
+    // 			    tetramers.push_back(mon_index[ret_matches[k].first]);
+    // 			    tetramers.push_back(mon_index[ret_matches[l].first]);
+    // 			  }	
+    // 			}
+    // 		      }
+    // 		    }
+    // 		    //loop for l that are neighbors j
+    // 		    for (size_t l = 0; l < nMatches2; l++) {
+    // 		      if (ret_matches2[l].first > i) {
+    // 			// Sort the order of j, k, l, due to ret_matches2
+    // 			size_t temp;
+    // 			size_t jel = ret_matches[j].first;
+    // 			size_t kel = ret_matches[k].first;
+    // 			size_t lel = ret_matches2[l].first;
+    // 			if (jel > lel) {
+    // 			  temp = jel;
+    // 			  jel = lel;
+    // 			  lel = temp;
+    // 			}
+    // 			if (kel > lel) {
+    // 			  temp = kel;
+    // 			  kel = lel;
+    // 			  lel = temp;
+    // 			}
+    // 			if (jel > kel) {
+    // 			  temp = jel;
+    // 			  jel = kel;
+    // 			  kel = temp;
+    // 			}
+		
+    // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+    // 			if(ret2.second && lel > kel && kel > jel){
+			  
+    // 			  // ghost == 0, local == 1
+    // 			  // ghost-ghost-ghost == 0
+    // 			  // ghost-ghost-local == 1 for all permutations
+    // 			  // ghost-local-local == 2 for all permutations
+    // 			  // local-local-local == 3
+    // 			  size_t islsum = is_local[mon_index[i]] + is_local[mon_index[jel]] +
+    // 			    is_local[mon_index[kel]] + is_local[mon_index[lel]];
+    // 			  bool include_tetramer = false;
+    // 			  if (use_ghost && (islsum > 0)) include_tetramer = true;
+    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+    // 			  if (include_tetramer) {
+    // 			    tetramers.push_back(mon_index[i]);
+    // 			    tetramers.push_back(mon_index[jel]);
+    // 			    tetramers.push_back(mon_index[kel]);
+    // 			    tetramers.push_back(mon_index[lel]);
+    // 			  }
+    // 			}
+    // 		      }
+    // 		    }// end tetramer loop
+    // 		  }
+    // 		}
+    // 	      }
+    // 	    }// end trimer loop
+	  
+		    
+
+    // 	    // Add the trimers that fulfil i > j > k, to avoid double counting
+    // 	    // We will add all trimers that fulfill the condition:
+    // 	    // At least 2 of the three distances must be smaller than the cutoff
+    // 	    // loop where k are neighbors of j
+    // 	    for (size_t k = 0; k < nMatches2; k++) {
+    // 	      if (ret_matches2[k].first > i) { 
+ 		
+    // 		size_t jel = ret_matches[j].first;
+    // 		size_t kel = ret_matches2[k].first;
+    // 		if (ret_matches[j].first > ret_matches2[k].first) {
+    // 		  jel = ret_matches2[k].first; 
+    // 		  kel = ret_matches[j].first;  
+    // 		}
+    // 		ret = donek.insert(std::make_pair(jel, kel));
+    // 		if (ret.second && kel > jel) {
+    // 		  // ghost == 0, local == 1
+    // 		  // ghost-ghost-ghost == 0
+    // 		  // ghost-ghost-local == 1 for all permutations
+    // 		  // ghost-local-local == 2 for all permutations
+    // 		  // local-local-local == 3
+    // 		  size_t islsum =
+    // 		    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
+
+    // 		  bool include_trimer = false;
+    // 		  if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+    // 		  if (!use_ghost && islsum == 3) include_trimer = true;
+
+    // 		  if (include_trimer) {
+    // 		    trimers.push_back(mon_index[i]);
+    // 		    trimers.push_back(mon_index[jel]);
+    // 		    trimers.push_back(mon_index[kel]);
+    // 		  }
+    // 		  // Add tetramers if requested
+    // 		  if (n_max > 3) {
+		    
+    // 		    // loop including where l are neighbors j
+    // 		    for (size_t l = 0; l < nMatches; l++) {
+		      
+    // 		      if (ret_matches[l].first > i) { 
+		
+
+    // 			// Sort the order of j, k, l, due to ret_matches2
+    // 			size_t temp;
+    // 			size_t jel = ret_matches[j].first;
+    // 			size_t kel = ret_matches2[k].first;
+    // 			size_t lel = ret_matches[l].first;
+    // 			if (jel > lel) {
+    // 			    temp = jel;
+    // 			    jel = lel;
+    // 			    lel = temp;
+    // 			  }
+    // 			  if (kel > lel) {
+    // 			    temp = kel;
+    // 			    kel = lel;
+    // 			    lel = temp;
+    // 			  }
+    // 			  if (jel > kel) {
+    // 			    temp = kel;
+    // 			    kel = jel;
+    // 			    jel = temp;
+    // 			  }
+			
+    // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+    // 			if (ret2.second && (lel > kel) && (kel > jel)) {// && order
+    // 			  // ghost == 0, local == 1
+    // 			  // ghost-ghost-ghost == 0
+    // 			  // ghost-ghost-local == 1 for all permutations
+    // 			  // ghost-local-local == 2 for all permutations
+    // 			  // local-local-local == 3
+    // 			  size_t islsum =
+    // 			    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]] + is_local[mon_index[lel]];
+
+    // 			  bool include_tetramer = false;
+    // 			  if (use_ghost && (islsum >0 )) include_tetramer = true;
+    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+    // 			  if (include_tetramer) {
+    // 			    tetramers.push_back(mon_index[i]);
+    // 			    tetramers.push_back(mon_index[jel]);
+    // 			    tetramers.push_back(mon_index[kel]);
+    // 			    tetramers.push_back(mon_index[lel]);
+    // 			  }
+    // 			}
+    // 		      }
+    // 		    }
+
+    // 		    // loop including where l are neighbors of j
+    // 		    for (size_t l = 0; l < nMatches2; l++) {
+    // 		      if (ret_matches2[l].first > i) { 
+			
+    // 			// Sort the order of j, k, l, due to ret_matches2
+    // 			size_t temp;
+    // 			size_t jel = ret_matches[j].first;
+    // 			size_t kel = ret_matches2[k].first;
+    // 			size_t lel = ret_matches2[l].first;
+    // 			if (jel > lel) {
+    // 			  temp = jel;
+    // 			  jel = lel;
+    // 			  lel = temp;
+    // 			}
+    // 			if (kel > lel) {
+    // 			  temp = kel;
+    // 			  kel = lel;
+    // 			  lel = temp;
+    // 			}
+    // 			if (jel > kel) {
+    // 			  temp = kel;
+    // 			  kel = jel;
+    // 			  jel = temp;
+    // 			}
+						
+    // 			ret2 = donel.insert(std::make_tuple(jel,kel,lel));
+    // 			if (ret2.second&&(lel > kel)&&(kel > jel)) {// && order
+    // 			  // ghost == 0, local == 1
+    // 			  // ghost-ghost-ghost == 0
+    // 			  // ghost-ghost-local == 1 for all permutations
+    // 			  // ghost-local-local == 2 for all permutations
+    // 			  // local-local-local == 3
+    // 			  size_t islsum =
+    // 			    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]] + is_local[mon_index[lel]];
+
+    // 			  bool include_tetramer = false;
+    // 			  if (use_ghost && (islsum >0 )) include_tetramer = true;
+    // 			  if (!use_ghost && islsum == 4) include_tetramer = true;
+
+    // 			  if (include_tetramer) {
+    // 			    tetramers.push_back(mon_index[i]);
+    // 			    tetramers.push_back(mon_index[jel]);
+    // 			    tetramers.push_back(mon_index[kel]);
+    // 			    tetramers.push_back(mon_index[lel]);
+    // 			  }
+			
+    // 			}
+    // 		      }
+    // 		    }
+    // 		  }// end tetramer condition
+    // 		} //end if unique combination of jk
+    // 	      }
+    // 	    }
+    // 	  }
+    // 	}
+    //   }
+    // }
   } // 
  
  
